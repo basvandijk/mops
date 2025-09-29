@@ -12,9 +12,9 @@ jobs:
     name: Test with ZenVoich/setup-mops
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       - uses: dfinity/setup-dfx@main
-      - uses: ZenVoich/setup-mops@v1
+      - uses: ZenVoich/setup-mops@3e94e453352269b34137b5ce49f09a8df81bed7d # v1.4.1
         with:
           mops-version: 1.0.0
       - name: Run tests
