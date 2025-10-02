@@ -2,7 +2,7 @@ FROM --platform=linux/amd64 zenvoich/mops-builder:1.1.0@sha256:9bb87e843a90f1c12
 
 # clone repository
 ARG COMMIT_HASH
-RUN git clone https://github.com/ZenVoich/mops.git
+RUN git clone https://github.com/dfinity/mops.git
 
 WORKDIR /mops
 RUN git checkout $COMMIT_HASH
