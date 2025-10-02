@@ -1,6 +1,7 @@
 {
 	"type": "module",
 	"scripts": {
+		"mops": "npm run --prefix ./cli mops",
 		"start": "npm run replica && npm run deploy-local && npm run decl && npm run frontends",
 		"frontends": "npm run start-registry & npm run start-docs & npm run start-blog & npm run start-cli-releases",
 		"start-registry": "cd frontend && npm run start",
@@ -37,6 +38,7 @@
 		"eslint": "8.57.0",
 		"eslint-plugin-svelte": "2.35.1",
 		"husky": "9.0.11",
+		"prettier-eslint": "16.4.2",
 		"typescript": "5.4.3"
 	}
 }
