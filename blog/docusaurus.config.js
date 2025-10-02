@@ -75,7 +75,7 @@ const config = {
 						items: [
 							{
 								label: 'GitHub',
-								href: 'https://github.com/ZenVoich/mops',
+								href: 'https://github.com/dfinity/mops',
 							},
 							{
 								label: 'Twitter',

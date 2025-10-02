@@ -1,6 +1,7 @@
 {
 	"type": "module",
 	"scripts": {
+		"mops": "npm run --prefix ./cli mops",
 		"start": "npm run replica && npm run deploy-local && npm run decl && npm run frontends",
 		"frontends": "npm run start-registry & npm run start-docs & npm run start-blog & npm run start-cli-releases",
 		"start-registry": "cd frontend && npm run start",
@@ -27,7 +28,11 @@
 		"build-cli": "npm run prepare-cli && npm run release-cli",
 		"prepare": "husky",
 		"postinstall": "(cd frontend && npm install) && (cd cli && npm install) && (cd docs && npm install) && (cd blog && npm install) && (cd cli-releases && npm install)",
-		"test": "mops test"
+		"test": "mops test",
+		"check:cli": "npm run --prefix ./cli check",
+		"check:frontend": "npm run --prefix ./frontend check",
+		"check": "run-p check:cli check:frontend",
+		"precommit": "run-p lint check"
 	},
 	"devDependencies": {
 		"@stylistic/eslint-plugin": "1.7.0",
@@ -37,6 +42,7 @@
 		"eslint": "8.57.0",
 		"eslint-plugin-svelte": "2.35.1",
 		"husky": "9.0.11",
+		"prettier-eslint": "16.4.2",
 		"typescript": "5.4.3"
 	}
 }
