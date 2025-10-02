@@ -28,7 +28,11 @@
 		"build-cli": "npm run prepare-cli && npm run release-cli",
 		"prepare": "husky",
 		"postinstall": "(cd frontend && npm install) && (cd cli && npm install) && (cd docs && npm install) && (cd blog && npm install) && (cd cli-releases && npm install)",
-		"test": "mops test"
+		"test": "mops test",
+		"check:cli": "npm run --prefix ./cli check",
+		"check:frontend": "npm run --prefix ./frontend check",
+		"check": "run-p check:cli check:frontend",
+		"precommit": "run-p lint check"
 	},
 	"devDependencies": {
 		"@stylistic/eslint-plugin": "1.7.0",
