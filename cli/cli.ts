@@ -12,6 +12,7 @@ import {installAll} from './commands/install/install-all.js';
 import {search} from './commands/search.js';
 import {add} from './commands/add.js';
 import {cacheSize, cleanCache, show} from './cache.js';
+import {build} from './commands/build.js';
 import {test} from './commands/test/test.js';
 import {template} from './commands/template.js';
 import {remove} from './commands/remove.js';
@@ -208,6 +209,17 @@ program
 		else if (sub == 'show') {
 			console.log(show());
 		}
+	});
+
+// build
+program
+	.command('build [canister]')
+	.description('Build a canister')
+	.addOption(new Option('--verbose', 'Verbose output'))
+	.action(async (canister, options) => {
+		checkConfigFile(true);
+		await installAll({silent: true, lock: 'ignore', installFromLockFile: true});
+		await build(canister, options);
 	});
 
 // test
