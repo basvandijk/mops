@@ -10,7 +10,6 @@ on:
 jobs:
   build:
     strategy:
-      max-parallel: 1
       matrix:
         mops-version: [ic-mops@1.0.0, ./cli/dist]
         moc-version: [0.14.13]
