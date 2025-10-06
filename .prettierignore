@@ -4,3 +4,4 @@ declarations/
 *.did
 *.js
 *.d.ts
+*.svelte
