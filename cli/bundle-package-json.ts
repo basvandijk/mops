@@ -11,7 +11,7 @@ delete packageJson.overrides;
 packageJson.dependencies = {
 	'dhall-to-json-cli': packageJson.dependencies['dhall-to-json-cli'],
 	'decomp-tarxz': packageJson.dependencies['decomp-tarxz'],
-	'buffer': packageJson.dependencies['buffer'],
+	buffer: packageJson.dependencies['buffer'],
 };
 
 writeFileSync('./bundle/package.json', JSON.stringify(packageJson, null, '  '));

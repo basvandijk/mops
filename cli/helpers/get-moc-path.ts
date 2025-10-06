@@ -5,7 +5,8 @@ export function getMocPath(throwIfNotFound = false) : string {
 	let mocPath = process.env.DFX_MOC_PATH;
 	if (!mocPath) {
 		try {
-			mocPath = execFileSync('dfx', ['cache', 'show']).toString().trim() + '/moc';
+			mocPath =
+				execFileSync('dfx', ['cache', 'show']).toString().trim() + '/moc';
 		}
 		catch (e) {
 			mocPath = '';

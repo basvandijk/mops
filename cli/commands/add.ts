@@ -2,7 +2,13 @@ import process from 'node:process';
 import path from 'node:path';
 import chalk from 'chalk';
 import {createLogUpdate} from 'log-update';
-import {checkConfigFile, getGithubCommit, parseGithubURL, readConfig, writeConfig} from '../mops.js';
+import {
+	checkConfigFile,
+	getGithubCommit,
+	parseGithubURL,
+	readConfig,
+	writeConfig,
+} from '../mops.js';
 import {getHighestVersion} from '../api/getHighestVersion.js';
 import {installMopsDep} from './install/install-mops-dep.js';
 import {installFromGithub} from '../vessel.js';
@@ -19,7 +25,11 @@ type AddOptions = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function add(name : string, {verbose = false, dev = false, lock} : AddOptions = {}, asName ?: string) {
+export async function add(
+	name : string,
+	{verbose = false, dev = false, lock} : AddOptions = {},
+	asName ?: string,
+) {
 	if (!checkConfigFile()) {
 		return;
 	}
@@ -48,7 +58,10 @@ export async function add(name : string, {verbose = false, dev = false, lock} : 
 		};
 	}
 	// github package
-	else if (name.startsWith('https://github.com') || name.split('/').length > 1) {
+	else if (
+		name.startsWith('https://github.com') ||
+		name.split('/').length > 1
+	) {
 		let {org, gitName, branch, commitHash} = parseGithubURL(name);
 
 		// fetch latest commit hash of branch if not specified
@@ -90,10 +103,14 @@ export async function add(name : string, {verbose = false, dev = false, lock} : 
 	}
 
 	if (pkgDetails.repo) {
-		await installFromGithub(pkgDetails.name, pkgDetails.repo, {verbose: verbose});
+		await installFromGithub(pkgDetails.name, pkgDetails.repo, {
+			verbose: verbose,
+		});
 	}
 	else if (!pkgDetails.path) {
-		let res = await installMopsDep(pkgDetails.name, pkgDetails.version, {verbose: verbose});
+		let res = await installMopsDep(pkgDetails.name, pkgDetails.version, {
+			verbose: verbose,
+		});
 		if (res === false) {
 			return;
 		}
@@ -118,16 +135,16 @@ export async function add(name : string, {verbose = false, dev = false, lock} : 
 
 	let installedPackages = await syncLocalCache();
 
-	await Promise.all([
-		notifyInstalls(installedPackages),
-		checkIntegrity(lock),
-	]);
+	await Promise.all([notifyInstalls(installedPackages), checkIntegrity(lock)]);
 
 	logUpdate.clear();
 
 	await checkRequirements({verbose});
 
-	console.log(chalk.green('Package installed ') + `${pkgDetails.name} = "${pkgDetails.repo || pkgDetails.path || pkgDetails.version}"`);
+	console.log(
+		chalk.green('Package installed ') +
+			`${pkgDetails.name} = "${pkgDetails.repo || pkgDetails.path || pkgDetails.version}"`,
+	);
 
 	// check conflicts
 	await resolvePackages({conflicts: 'warning'});

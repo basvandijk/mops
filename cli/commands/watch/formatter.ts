@@ -4,14 +4,21 @@ import {ErrorChecker} from './error-checker.js';
 
 export class Formatter {
 	verbose = false;
-	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' = 'pending';
+	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' =
+		'pending';
 	errorChecker : ErrorChecker;
 	aborted = false;
 	controller = new AbortController();
 	currentRun : Promise<any> | undefined;
 	result : FormatResult | undefined;
 
-	constructor({verbose, errorChecker} : {verbose : boolean, errorChecker : ErrorChecker}) {
+	constructor({
+		verbose,
+		errorChecker,
+	} : {
+		verbose : boolean;
+		errorChecker : ErrorChecker;
+	}) {
 		this.verbose = verbose;
 		this.errorChecker = errorChecker;
 	}
@@ -42,10 +49,15 @@ export class Formatter {
 
 		this.controller = new AbortController();
 
-		this.currentRun = format('', {silent: true}, this.controller.signal, (result) => {
-			this.result = result;
-			onProgress();
-		});
+		this.currentRun = format(
+			'',
+			{silent: true},
+			this.controller.signal,
+			(result) => {
+				this.result = result;
+				onProgress();
+			},
+		);
 		await this.currentRun;
 
 		if (!this.aborted) {

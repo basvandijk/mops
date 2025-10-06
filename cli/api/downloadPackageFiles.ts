@@ -4,7 +4,12 @@ import {resolveVersion} from './resolveVersion.js';
 import {parallel} from '../parallel.js';
 import {Storage} from '../declarations/storage/storage.did.js';
 
-export async function downloadPackageFiles(pkg : string, version = '', threads = 8, onLoad = (_fileIds : string[], _fileId : string) => {}) : Promise<Map<string, Array<number>>> {
+export async function downloadPackageFiles(
+	pkg : string,
+	version = '',
+	threads = 8,
+	onLoad = (_fileIds : string[], _fileId : string) => {},
+) : Promise<Map<string, Array<number>>> {
 	version = await resolveVersion(pkg, version);
 
 	let {storageId, fileIds} = await getPackageFilesInfo(pkg, version);
@@ -21,7 +26,10 @@ export async function downloadPackageFiles(pkg : string, version = '', threads =
 }
 
 // get package files meta
-export async function getPackageFilesInfo(pkg : string, version : string) : Promise<{ storageId : Principal, fileIds : string[] }> {
+export async function getPackageFilesInfo(
+	pkg : string,
+	version : string,
+) : Promise<{ storageId : Principal; fileIds : string[] }> {
 	let actor = await mainActor();
 
 	let [packageDetailsRes, fileIds] = await Promise.all([
@@ -41,7 +49,10 @@ export async function getPackageFilesInfo(pkg : string, version : string) : Prom
 }
 
 // get package files ids
-export async function getFileIds(pkg : string, version : string) : Promise<string[]> {
+export async function getFileIds(
+	pkg : string,
+	version : string,
+) : Promise<string[]> {
 	let actor = await mainActor();
 	let fileIdsRes = await actor.getFileIds(pkg, version);
 
@@ -54,7 +65,10 @@ export async function getFileIds(pkg : string, version : string) : Promise<strin
 }
 
 // download single file
-export async function downloadFile(storage : Storage | string, fileId : string) : Promise<{path : string, data : Array<number>;}> {
+export async function downloadFile(
+	storage : Storage | string,
+	fileId : string,
+) : Promise<{ path : string; data : Array<number> }> {
 	if (typeof storage === 'string') {
 		storage = await storageActor(Principal.fromText(storage));
 	}

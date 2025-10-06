@@ -1,11 +1,17 @@
 import {Principal} from '@dfinity/principal';
-import {createActor as createMainActor, canisterId as mainCanisterId} from '/declarations/main';
+import {
+	createActor as createMainActor,
+	canisterId as mainCanisterId,
+} from '/declarations/main';
 import {createActor as createStorageActor} from '/declarations/storage';
 
 let getOptions = () => {
 	return {
 		agentOptions: {
-			host: process.env.NODE_ENV === 'production' ? 'https://icp-api.io' : 'http://localhost:4943',
+			host:
+				process.env.NODE_ENV === 'production'
+					? 'https://icp-api.io'
+					: 'http://localhost:4943',
 			verifyQuerySignatures: false,
 		},
 	};
@@ -25,9 +31,13 @@ declare global {
 }
 
 window.getStoragesStats = () => {
-	mainActor().getStoragesStats().then((statsAr) => {
-		console.log(statsAr.map(([principal, stats]) => {
-			return [principal.toText(), stats];
-		}));
-	});
+	mainActor()
+		.getStoragesStats()
+		.then((statsAr) => {
+			console.log(
+				statsAr.map(([principal, stats]) => {
+					return [principal.toText(), stats];
+				}),
+			);
+		});
 };

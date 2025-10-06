@@ -17,7 +17,12 @@ import {getRootDir, readConfig} from '../../mops.js';
 import {parallel} from '../../parallel.js';
 
 import {MMF1} from './mmf1.js';
-import {absToRel, pipeMMF, pipeStderrToMMF, pipeStdoutToMMF} from './utils.js';
+import {
+	absToRel,
+	pipeMMF,
+	pipeStderrToMMF,
+	pipeStdoutToMMF,
+} from './utils.js';
 import {Reporter} from './reporters/reporter.js';
 import {VerboseReporter} from './reporters/verbose-reporter.js';
 import {FilesReporter} from './reporters/files-reporter.js';
@@ -51,7 +56,6 @@ type TestOptions = {
 	verbose : boolean;
 };
 
-
 let replica = new Replica();
 let replicaStartPromise : Promise<void> | undefined;
 
@@ -68,12 +72,18 @@ export async function test(filter = '', options : Partial<TestOptions> = {}) {
 	let config = readConfig();
 	let rootDir = getRootDir();
 
-	let replicaType = options.replica ?? (config.toolchain?.['pocket-ic'] ? 'pocket-ic' : 'dfx' as ReplicaName);
+	let replicaType =
+		options.replica ??
+		(config.toolchain?.['pocket-ic'] ? 'pocket-ic' : ('dfx' as ReplicaName));
 
 	if (replicaType === 'pocket-ic' && !config.toolchain?.['pocket-ic']) {
 		let dfxVersion = getDfxVersion();
 		if (!dfxVersion || new SemVer(dfxVersion).compare('0.24.1') < 0) {
-			console.log(chalk.red('Please update dfx to the version >=0.24.1 or specify pocket-ic version in mops.toml'));
+			console.log(
+				chalk.red(
+					'Please update dfx to the version >=0.24.1 or specify pocket-ic version in mops.toml',
+				),
+			);
 			process.exit(1);
 		}
 		else {
@@ -120,21 +130,28 @@ export async function test(filter = '', options : Partial<TestOptions> = {}) {
 			process.stdout.write('\x1Bc');
 
 			controller = new AbortController();
-			curRun = runAll(options.reporter, filter, options.mode, replicaType, true, controller.signal);
+			curRun = runAll(
+				options.reporter,
+				filter,
+				options.mode,
+				replicaType,
+				true,
+				controller.signal,
+			);
 			await curRun;
 
 			console.log('-'.repeat(50));
 			console.log('Waiting for file changes...');
-			console.log(chalk.gray((`Press ${chalk.gray('Ctrl+C')} to exit.`)));
+			console.log(chalk.gray(`Press ${chalk.gray('Ctrl+C')} to exit.`));
 		}, 200);
 
-		let watcher = chokidar.watch([
-			path.join(rootDir, '**/*.mo'),
-			path.join(rootDir, 'mops.toml'),
-		], {
-			ignored: ignore,
-			ignoreInitial: true,
-		});
+		let watcher = chokidar.watch(
+			[path.join(rootDir, '**/*.mo'), path.join(rootDir, 'mops.toml')],
+			{
+				ignored: ignore,
+				ignoreInitial: true,
+			},
+		);
 
 		watcher.on('all', () => {
 			run();
@@ -142,7 +159,12 @@ export async function test(filter = '', options : Partial<TestOptions> = {}) {
 		run();
 	}
 	else {
-		let passed = await runAll(options.reporter, filter, options.mode, replicaType);
+		let passed = await runAll(
+			options.reporter,
+			filter,
+			options.mode,
+			replicaType,
+		);
 		if (!passed) {
 			process.exit(1);
 		}
@@ -152,12 +174,33 @@ export async function test(filter = '', options : Partial<TestOptions> = {}) {
 let mocPath = '';
 let wasmtimePath = '';
 
-async function runAll(reporterName : ReporterName | undefined, filter = '', mode : TestMode = 'interpreter', replicaType : ReplicaName, watch = false, signal ?: AbortSignal) : Promise<boolean> {
-	let done = await testWithReporter(reporterName, filter, mode, replicaType, watch, signal);
+async function runAll(
+	reporterName : ReporterName | undefined,
+	filter = '',
+	mode : TestMode = 'interpreter',
+	replicaType : ReplicaName,
+	watch = false,
+	signal ?: AbortSignal,
+) : Promise<boolean> {
+	let done = await testWithReporter(
+		reporterName,
+		filter,
+		mode,
+		replicaType,
+		watch,
+		signal,
+	);
 	return done;
 }
 
-export async function testWithReporter(reporterName : ReporterName | Reporter | undefined, filter = '', defaultMode : TestMode = 'interpreter', replicaType : ReplicaName, watch = false, signal ?: AbortSignal) : Promise<boolean> {
+export async function testWithReporter(
+	reporterName : ReporterName | Reporter | undefined,
+	filter = '',
+	defaultMode : TestMode = 'interpreter',
+	replicaType : ReplicaName,
+	watch = false,
+	signal ?: AbortSignal,
+) : Promise<boolean> {
 	let rootDir = getRootDir();
 	let files : string[] = [];
 	let libFiles = globSync('**/test?(s)/lib.mo', globConfig);
@@ -181,7 +224,6 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 		return false;
 	}
 
-
 	let reporter : Reporter;
 
 	if (!reporterName || typeof reporterName === 'string') {
@@ -190,16 +232,16 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 		}
 
 		if (reporterName == 'compact') {
-			reporter = new CompactReporter;
+			reporter = new CompactReporter();
 		}
 		else if (reporterName == 'files') {
-			reporter = new FilesReporter;
+			reporter = new FilesReporter();
 		}
 		else if (reporterName == 'silent') {
-			reporter = new SilentReporter;
+			reporter = new SilentReporter();
 		}
 		else {
-			reporter = new VerboseReporter;
+			reporter = new VerboseReporter();
 		}
 	}
 	else {
@@ -227,7 +269,10 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 		if (lines.includes('// @testmode wasi')) {
 			mode = 'wasi';
 		}
-		else if (lines.includes('// @testmode replica') || lines.find(line => line.match(/^(persistent )?actor( class)?/))) {
+		else if (
+			lines.includes('// @testmode replica') ||
+			lines.find((line) => line.match(/^(persistent )?actor( class)?/))
+		) {
 			mode = 'replica';
 		}
 		return {file, mode};
@@ -245,12 +290,23 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 		// fallback wasmtime to global binary if not specified in config (legacy)
 		else {
 			wasmtimePath = 'wasmtime';
-			console.log(chalk.yellow('Warning:'), 'Wasmtime is not specified in config. Using global binary "wasmtime". This will be removed in the future.');
-			console.log(`Run ${chalk.green('mops toolchain use wasmtime')} or add ${chalk.green('wasmtime = "<version>"')} in mops.toml to avoid breaking changes with future versions of mops.`);
+			console.log(
+				chalk.yellow('Warning:'),
+				'Wasmtime is not specified in config. Using global binary "wasmtime". This will be removed in the future.',
+			);
+			console.log(
+				`Run ${chalk.green('mops toolchain use wasmtime')} or add ${chalk.green('wasmtime = "<version>"')} in mops.toml to avoid breaking changes with future versions of mops.`,
+			);
 		}
 	}
 
-	let runTestFile = async ({file, mode} : {file : string, mode : TestMode}) => {
+	let runTestFile = async ({
+		file,
+		mode,
+	} : {
+		file : string;
+		mode : TestMode;
+	}) => {
 		if (signal?.aborted) {
 			return;
 		}
@@ -259,11 +315,18 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 		let mmf = new MMF1(mode === 'replica' ? 'print' : 'store', absToRel(file));
 
 		let promise = new Promise<void>((resolve) => {
-			let mocArgs = ['--hide-warnings', '--error-detail=2', ...sourcesArr.join(' ').split(' '), file].filter(x => x);
+			let mocArgs = [
+				'--hide-warnings',
+				'--error-detail=2',
+				...sourcesArr.join(' ').split(' '),
+				file,
+			].filter((x) => x);
 
 			// interpret
 			if (mode === 'interpreter') {
-				let proc = spawn(mocPath, ['-r', '-ref-system-api', ...mocArgs], {signal});
+				let proc = spawn(mocPath, ['-r', '-ref-system-api', ...mocArgs], {
+					signal,
+				});
 				proc.addListener('error', (error : any) => {
 					if (error?.code === 'ABORT_ERR') {
 						return;
@@ -277,55 +340,78 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 				let wasmFile = `${path.join(testTempDir, path.parse(file).name)}.wasm`;
 
 				// build
-				let buildProc = spawn(mocPath, [`-o=${wasmFile}`, '-wasi-system-api', ...mocArgs], {signal});
+				let buildProc = spawn(
+					mocPath,
+					[`-o=${wasmFile}`, '-wasi-system-api', ...mocArgs],
+					{signal},
+				);
 				buildProc.addListener('error', (error : any) => {
 					if (error?.code === 'ABORT_ERR') {
 						return;
 					}
 					throw error;
 				});
-				pipeMMF(buildProc, mmf).then(async () => {
-					if (mmf.failed > 0) {
-						return;
-					}
-					// run
-					let wasmtimeArgs = [];
-					if (config.toolchain?.wasmtime && config.toolchain?.wasmtime >= '14.0.0') {
-						wasmtimeArgs = [
-							'-S', 'preview2=n',
-							'-C', 'cache=n',
-							'-W', 'bulk-memory',
-							'-W', 'multi-memory',
-							'-W', 'memory64',
-							'-W', 'max-wasm-stack=4000000',
-							'-W', 'nan-canonicalization=y',
-							wasmFile,
-						];
-					}
-					else {
-						console.error(chalk.red('Minimum wasmtime version is 14.0.0. Please update wasmtime to the latest version'));
-						process.exit(1);
-					}
-
-					let proc = spawn(wasmtimePath, wasmtimeArgs, {signal});
-					proc.addListener('error', (error : any) => {
-						if (error?.code === 'ABORT_ERR') {
+				pipeMMF(buildProc, mmf)
+					.then(async () => {
+						if (mmf.failed > 0) {
 							return;
 						}
-						throw error;
-					});
+						// run
+						let wasmtimeArgs = [];
+						if (
+							config.toolchain?.wasmtime &&
+							config.toolchain?.wasmtime >= '14.0.0'
+						) {
+							wasmtimeArgs = [
+								'-S',
+								'preview2=n',
+								'-C',
+								'cache=n',
+								'-W',
+								'bulk-memory',
+								'-W',
+								'multi-memory',
+								'-W',
+								'memory64',
+								'-W',
+								'max-wasm-stack=4000000',
+								'-W',
+								'nan-canonicalization=y',
+								wasmFile,
+							];
+						}
+						else {
+							console.error(
+								chalk.red(
+									'Minimum wasmtime version is 14.0.0. Please update wasmtime to the latest version',
+								),
+							);
+							process.exit(1);
+						}
 
-					await pipeMMF(proc, mmf);
-				}).finally(() => {
-					fs.rmSync(wasmFile, {force: true});
-				}).then(resolve);
+						let proc = spawn(wasmtimePath, wasmtimeArgs, {signal});
+						proc.addListener('error', (error : any) => {
+							if (error?.code === 'ABORT_ERR') {
+								return;
+							}
+							throw error;
+						});
+
+						await pipeMMF(proc, mmf);
+					})
+					.finally(() => {
+						fs.rmSync(wasmFile, {force: true});
+					})
+					.then(resolve);
 			}
 			// build and execute in replica
 			else if (mode === 'replica') {
 				let wasmFile = `${path.join(testTempDir, path.parse(file).name)}.wasm`;
 
 				// build
-				let buildProc = spawn(mocPath, [`-o=${wasmFile}`, ...mocArgs], {signal});
+				let buildProc = spawn(mocPath, [`-o=${wasmFile}`, ...mocArgs], {
+					signal,
+				});
 				buildProc.addListener('error', (error : any) => {
 					if (error?.code === 'ABORT_ERR') {
 						return;
@@ -333,64 +419,78 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 					throw error;
 				});
 
-				pipeMMF(buildProc, mmf).then(async () => {
-					if (mmf.failed > 0) {
-						return;
-					}
-
-					await startReplicaOnce(replica, replicaType);
-
-					if (signal?.aborted) {
-						return;
-					}
-
-					let canisterName = path.parse(file).name;
-					let idlFactory = ({IDL} : any) => {
-						return IDL.Service({'runTests': IDL.Func([], [], [])});
-					};
-					interface _SERVICE {'runTests' : ActorMethod<[], undefined>;}
-
-					let canister = await replica.deploy(canisterName, wasmFile, idlFactory, undefined, signal);
-
-					if (signal?.aborted || !canister) {
-						return;
-					}
-
-					pipeStdoutToMMF(canister.stream, mmf);
-
-					let actor = await replica.getActor(canisterName) as _SERVICE;
-
-					try {
-						if (globalThis.mopsReplicaTestRunning) {
-							await new Promise<void>((resolve) => {
-								let timerId = setInterval(() => {
-									if (!globalThis.mopsReplicaTestRunning) {
-										resolve();
-										clearInterval(timerId);
-									}
-								}, Math.random() * 1000 | 0);
-							});
+				pipeMMF(buildProc, mmf)
+					.then(async () => {
+						if (mmf.failed > 0) {
+							return;
 						}
+
+						await startReplicaOnce(replica, replicaType);
 
 						if (signal?.aborted) {
 							return;
 						}
 
-						globalThis.mopsReplicaTestRunning = true;
-						await actor.runTests();
-						globalThis.mopsReplicaTestRunning = false;
+						let canisterName = path.parse(file).name;
+						let idlFactory = ({IDL} : any) => {
+							return IDL.Service({runTests: IDL.Func([], [], [])});
+						};
+						interface _SERVICE {
+							runTests : ActorMethod<[], undefined>;
+						}
 
-						mmf.pass();
-					}
-					catch (e : any) {
-						let stderrStream = new PassThrough();
-						pipeStderrToMMF(stderrStream, mmf, path.dirname(file));
-						stderrStream.write(e.message);
-					}
-				}).finally(async () => {
-					globalThis.mopsReplicaTestRunning = false;
-					fs.rmSync(wasmFile, {force: true});
-				}).then(resolve);
+						let canister = await replica.deploy(
+							canisterName,
+							wasmFile,
+							idlFactory,
+							undefined,
+							signal,
+						);
+
+						if (signal?.aborted || !canister) {
+							return;
+						}
+
+						pipeStdoutToMMF(canister.stream, mmf);
+
+						let actor = (await replica.getActor(canisterName)) as _SERVICE;
+
+						try {
+							if (globalThis.mopsReplicaTestRunning) {
+								await new Promise<void>((resolve) => {
+									let timerId = setInterval(
+										() => {
+											if (!globalThis.mopsReplicaTestRunning) {
+												resolve();
+												clearInterval(timerId);
+											}
+										},
+										(Math.random() * 1000) | 0,
+									);
+								});
+							}
+
+							if (signal?.aborted) {
+								return;
+							}
+
+							globalThis.mopsReplicaTestRunning = true;
+							await actor.runTests();
+							globalThis.mopsReplicaTestRunning = false;
+
+							mmf.pass();
+						}
+						catch (e : any) {
+							let stderrStream = new PassThrough();
+							pipeStderrToMMF(stderrStream, mmf, path.dirname(file));
+							stderrStream.write(e.message);
+						}
+					})
+					.finally(async () => {
+						globalThis.mopsReplicaTestRunning = false;
+						fs.rmSync(wasmFile, {force: true});
+					})
+					.then(resolve);
 			}
 		});
 
@@ -403,8 +503,16 @@ export async function testWithReporter(reporterName : ReporterName | Reporter | 
 		await promise;
 	};
 
-	await parallel(os.cpus().length, filesWithMode.filter(({mode}) => mode !== 'replica'), runTestFile);
-	await parallel(1, filesWithMode.filter(({mode}) => mode === 'replica'), runTestFile);
+	await parallel(
+		os.cpus().length,
+		filesWithMode.filter(({mode}) => mode !== 'replica'),
+		runTestFile,
+	);
+	await parallel(
+		1,
+		filesWithMode.filter(({mode}) => mode === 'replica'),
+		runTestFile,
+	);
 
 	if (hasReplicaTests && !watch) {
 		await replica.stop();

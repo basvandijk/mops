@@ -18,8 +18,14 @@ export async function template(templateName ?: string, options : any = {}) {
 				{title: 'test/lib.test.mo', value: 'lib.test.mo'},
 				{title: 'License MIT', value: 'license:MIT'},
 				{title: 'License Apache-2.0', value: 'license:Apache-2.0'},
-				{title: 'GitHub Workflow to run \'mops test\'', value: 'github-workflow:mops-test'},
-				{title: 'GitHub Workflow to publish a package', value: 'github-workflow:mops-publish'},
+				{
+					title: 'GitHub Workflow to run \'mops test\'',
+					value: 'github-workflow:mops-test',
+				},
+				{
+					title: 'GitHub Workflow to publish a package',
+					value: 'github-workflow:mops-publish',
+				},
 				{title: '× Cancel', value: ''},
 			],
 			initial: 0,
@@ -30,20 +36,30 @@ export async function template(templateName ?: string, options : any = {}) {
 	if (templateName === 'github-workflow:mops-test') {
 		let dest = path.resolve(getRootDir(), '.github/workflows/mops-test.yml');
 		if (fs.existsSync(dest)) {
-			console.log(chalk.yellow('Workflow already exists:'), path.relative(getRootDir(), dest));
+			console.log(
+				chalk.yellow('Workflow already exists:'),
+				path.relative(getRootDir(), dest),
+			);
 			return;
 		}
-		fs.mkdirSync(path.resolve(getRootDir(), '.github/workflows'), {recursive: true});
+		fs.mkdirSync(path.resolve(getRootDir(), '.github/workflows'), {
+			recursive: true,
+		});
 		copyTemplateFileSync('mops-test.yml', dest);
 		console.log(chalk.green('Created'), path.relative(getRootDir(), dest));
 	}
 	else if (templateName === 'github-workflow:mops-publish') {
 		let dest = path.resolve(getRootDir(), '.github/workflows/mops-publish.yml');
 		if (fs.existsSync(dest)) {
-			console.log(chalk.yellow('Workflow already exists:'), path.relative(getRootDir(), dest));
+			console.log(
+				chalk.yellow('Workflow already exists:'),
+				path.relative(getRootDir(), dest),
+			);
 			return;
 		}
-		fs.mkdirSync(path.resolve(getRootDir(), '.github/workflows'), {recursive: true});
+		fs.mkdirSync(path.resolve(getRootDir(), '.github/workflows'), {
+			recursive: true,
+		});
 		copyTemplateFileSync('mops-publish.yml', dest);
 		console.log(chalk.green('Created'), path.relative(getRootDir(), dest));
 	}
@@ -64,27 +80,57 @@ export async function template(templateName ?: string, options : any = {}) {
 		};
 
 		if (templateName === 'license:MIT') {
-			copyTemplateFileSync('licenses/MIT', path.resolve(getRootDir(), 'LICENSE'));
+			copyTemplateFileSync(
+				'licenses/MIT',
+				path.resolve(getRootDir(), 'LICENSE'),
+			);
 			setYearAndOwner(path.resolve(getRootDir(), 'LICENSE'));
-			console.log(chalk.green('Created'), path.relative(getRootDir(), 'LICENSE'));
+			console.log(
+				chalk.green('Created'),
+				path.relative(getRootDir(), 'LICENSE'),
+			);
 		}
 		else if (templateName === 'license:Apache-2.0') {
-			copyTemplateFileSync('licenses/Apache-2.0', path.resolve(getRootDir(), 'LICENSE'));
-			copyTemplateFileSync('licenses/Apache-2.0-NOTICE', path.resolve(getRootDir(), 'NOTICE'));
+			copyTemplateFileSync(
+				'licenses/Apache-2.0',
+				path.resolve(getRootDir(), 'LICENSE'),
+			);
+			copyTemplateFileSync(
+				'licenses/Apache-2.0-NOTICE',
+				path.resolve(getRootDir(), 'NOTICE'),
+			);
 			setYearAndOwner(path.resolve(getRootDir(), 'NOTICE'));
-			console.log(chalk.green('Created'), path.relative(getRootDir(), 'LICENSE'));
-			console.log(chalk.green('Created'), path.relative(getRootDir(), 'NOTICE'));
+			console.log(
+				chalk.green('Created'),
+				path.relative(getRootDir(), 'LICENSE'),
+			);
+			console.log(
+				chalk.green('Created'),
+				path.relative(getRootDir(), 'NOTICE'),
+			);
 		}
 	}
 	else if (templateName === 'lib.mo') {
 		fs.mkdirSync(path.join(getRootDir(), 'src'), {recursive: true});
-		copyTemplateFileSync('src/lib.mo', path.resolve(getRootDir(), 'src/lib.mo'));
-		console.log(chalk.green('Created'), path.relative(getRootDir(), 'src/lib.mo'));
+		copyTemplateFileSync(
+			'src/lib.mo',
+			path.resolve(getRootDir(), 'src/lib.mo'),
+		);
+		console.log(
+			chalk.green('Created'),
+			path.relative(getRootDir(), 'src/lib.mo'),
+		);
 	}
 	else if (templateName === 'lib.test.mo') {
 		fs.mkdirSync(path.join(getRootDir(), 'test'), {recursive: true});
-		copyTemplateFileSync('test/lib.test.mo', path.resolve(getRootDir(), 'test/lib.test.mo'));
-		console.log(chalk.green('Created'), path.relative(getRootDir(), 'test/lib.test.mo'));
+		copyTemplateFileSync(
+			'test/lib.test.mo',
+			path.resolve(getRootDir(), 'test/lib.test.mo'),
+		);
+		console.log(
+			chalk.green('Created'),
+			path.relative(getRootDir(), 'test/lib.test.mo'),
+		);
 	}
 	else if (templateName === 'readme') {
 		let dest = path.resolve(getRootDir(), 'README.md');
@@ -104,6 +150,9 @@ export async function template(templateName ?: string, options : any = {}) {
 		}
 		fs.writeFileSync(dest, data);
 
-		console.log(chalk.green('Created'), path.relative(getRootDir(), 'README.md'));
+		console.log(
+			chalk.green('Created'),
+			path.relative(getRootDir(), 'README.md'),
+		);
 	}
 }

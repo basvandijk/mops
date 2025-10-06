@@ -16,7 +16,10 @@ export function findChangelogEntry(changelog : string, version : string) : strin
 				nodes.push(node);
 			}
 		}
-		else if (node.type === 'heading' && toMarkdown(node).match(new RegExp(`\\b${version}\\b`))) {
+		else if (
+			node.type === 'heading' &&
+			toMarkdown(node).match(new RegExp(`\\b${version}\\b`))
+		) {
 			depth = node.depth;
 			found = true;
 		}

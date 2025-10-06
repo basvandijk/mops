@@ -32,7 +32,7 @@ export class MMF1 {
 		this.file = file;
 	}
 
-	_log(type : MessageType,  ...args : string[]) {
+	_log(type : MessageType, ...args : string[]) {
 		if (this.strategy === 'store') {
 			this.output.push({
 				type,
@@ -54,7 +54,9 @@ export class MMF1 {
 	}
 
 	getErrorMessages() {
-		return this.output.filter(out => out.type === 'fail').map(out => out.message);
+		return this.output
+			.filter((out) => out.type === 'fail')
+			.map((out) => out.message);
 	}
 
 	parseLine(line : string) {
@@ -71,7 +73,12 @@ export class MMF1 {
 			// ignore unknown mops messages
 		}
 		else {
-			this._log('stdout', ' '.repeat(this.stack.length * 2), chalk.gray('stdout'), line);
+			this._log(
+				'stdout',
+				' '.repeat(this.stack.length * 2),
+				chalk.gray('stdout'),
+				line,
+			);
 		}
 	}
 
@@ -80,7 +87,12 @@ export class MMF1 {
 		if (suite) {
 			if (this.currSuite !== suite) {
 				this.currSuite = suite;
-				this._log('suite', ' '.repeat((this.stack.length - 1) * 2), (chalk.gray('•')) + '', suite);
+				this._log(
+					'suite',
+					' '.repeat((this.stack.length - 1) * 2),
+					chalk.gray('•') + '',
+					suite,
+				);
 			}
 		}
 		this.stack.push(name);
@@ -108,23 +120,45 @@ export class MMF1 {
 				return;
 			}
 			this.passed++;
-			this._log(status, ' '.repeat(this.stack.length * 2), chalk.green('✓'), name);
-			this.passedNamesFlat.push([this.file, ...this.stack, name].join(this.nestingSymbol));
+			this._log(
+				status,
+				' '.repeat(this.stack.length * 2),
+				chalk.green('✓'),
+				name,
+			);
+			this.passedNamesFlat.push(
+				[this.file, ...this.stack, name].join(this.nestingSymbol),
+			);
 		}
 		else if (status === 'fail') {
 			this.failed++;
-			this._log(status, ' '.repeat(this.stack.length * 2), chalk.red('✖'), name);
+			this._log(
+				status,
+				' '.repeat(this.stack.length * 2),
+				chalk.red('✖'),
+				name,
+			);
 		}
 		else if (status === 'skip') {
 			this.skipped++;
-			this._log(status, ' '.repeat(this.stack.length * 2), chalk.yellow('−'), name);
+			this._log(
+				status,
+				' '.repeat(this.stack.length * 2),
+				chalk.yellow('−'),
+				name,
+			);
 		}
 	}
 
 	fail(stderr : string) {
 		let name = this.stack.pop() || '';
 		this._status(name, 'fail');
-		this._log('fail', ' '.repeat(this.stack.length * 2), chalk.red('FAIL'), stderr);
+		this._log(
+			'fail',
+			' '.repeat(this.stack.length * 2),
+			chalk.red('FAIL'),
+			stderr,
+		);
 	}
 
 	pass() {

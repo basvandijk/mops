@@ -13,7 +13,8 @@ import {globMoFiles} from './globMoFiles.js';
 export class WarningChecker {
 	verbose = false;
 	canisters : Record<string, string> = {};
-	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' = 'pending';
+	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' =
+		'pending';
 	warnings : string[] = [];
 	errorChecker : ErrorChecker;
 	aborted = false;
@@ -22,7 +23,15 @@ export class WarningChecker {
 	totalFiles = 0;
 	processedFiles = 0;
 
-	constructor({verbose, canisters, errorChecker} : {verbose : boolean, canisters : Record<string, string>, errorChecker : ErrorChecker}) {
+	constructor({
+		verbose,
+		canisters,
+		errorChecker,
+	} : {
+		verbose : boolean;
+		canisters : Record<string, string>;
+		errorChecker : ErrorChecker;
+	}) {
 		this.verbose = verbose;
 		this.canisters = canisters;
 		this.errorChecker = errorChecker;
@@ -71,7 +80,11 @@ export class WarningChecker {
 			let {signal} = controller;
 			this.controllers.set(file, controller);
 
-			let {stderr} = await promisify(execFile)(mocPath, ['--check', ...deps.flatMap(x => x.split(' ')), file], {cwd: rootDir, signal}).catch((error) => {
+			let {stderr} = await promisify(execFile)(
+				mocPath,
+				['--check', ...deps.flatMap((x) => x.split(' ')), file],
+				{cwd: rootDir, signal},
+			).catch((error) => {
 				if (error.code === 'ABORT_ERR') {
 					return {stderr: ''};
 				}
@@ -89,7 +102,10 @@ export class WarningChecker {
 						let str = line
 							.replace(': warning [', `: ${chalk.yellow('warning')} [`)
 							.replace(/unused field (\w+)/, `unused field ${chalk.bold('$1')}`)
-							.replace(/unused identifier (\w+)/, `unused identifier ${chalk.bold('$1')}`)
+							.replace(
+								/unused identifier (\w+)/,
+								`unused identifier ${chalk.bold('$1')}`,
+							)
 							.trim();
 						this.warnings.push(str);
 					}

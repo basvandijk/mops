@@ -28,7 +28,9 @@ export class FilesReporter implements Reporter {
 				console.log('-'.repeat(50));
 			}
 			else {
-				console.log(`${chalk.green('✓')} ${absToRel(file)} ${mode === 'interpreter' ? '' : chalk.gray(`(${mode})`)}`);
+				console.log(
+					`${chalk.green('✓')} ${absToRel(file)} ${mode === 'interpreter' ? '' : chalk.gray(`(${mode})`)}`,
+				);
 			}
 		});
 	}
@@ -42,10 +44,15 @@ export class FilesReporter implements Reporter {
 			console.log(chalk.greenBright('Tests passed'));
 		}
 
-		console.log(`Done in ${chalk.gray(((Date.now() - this.#startTime) / 1000).toFixed(2) + 's')}`
-			+ `, passed ${chalk.greenBright(this.passed)} files`
-			+ (this.skipped ? `, skipped ${chalk[this.skipped ? 'yellowBright' : 'gray'](this.skipped)} cases` : '')
-			+ (this.failed ? `, failed ${chalk[this.failed ? 'redBright' : 'gray'](this.failed)} files` : '')
+		console.log(
+			`Done in ${chalk.gray(((Date.now() - this.#startTime) / 1000).toFixed(2) + 's')}` +
+				`, passed ${chalk.greenBright(this.passed)} files` +
+				(this.skipped
+					? `, skipped ${chalk[this.skipped ? 'yellowBright' : 'gray'](this.skipped)} cases`
+					: '') +
+				(this.failed
+					? `, failed ${chalk[this.failed ? 'redBright' : 'gray'](this.failed)} files`
+					: ''),
 		);
 
 		return this.failed === 0;

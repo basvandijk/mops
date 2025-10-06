@@ -23,20 +23,25 @@ let globConfig = {
 };
 
 type FormatOptions = {
-	check : boolean,
-	silent : boolean,
+	check : boolean;
+	silent : boolean;
 };
 
 export type FormatResult = {
-	ok : boolean,
-	total : number,
-	checked : number,
-	valid : number,
-	invalid : number,
-	formatted : number,
+	ok : boolean;
+	total : number;
+	checked : number;
+	valid : number;
+	invalid : number;
+	formatted : number;
 };
 
-export async function format(filter : string, options : Partial<FormatOptions> = {}, signal ?: AbortSignal, onProgress ?: (result : FormatResult) => void) : Promise<FormatResult> {
+export async function format(
+	filter : string,
+	options : Partial<FormatOptions> = {},
+	signal ?: AbortSignal,
+	onProgress ?: (result : FormatResult) => void,
+) : Promise<FormatResult> {
 	let startTime = Date.now();
 
 	let rootDir = getRootDir();
@@ -117,19 +122,31 @@ export async function format(filter : string, options : Partial<FormatOptions> =
 
 		if (options.check) {
 			if (ok) {
-				options.silent || console.log(`${chalk.green('✓')} ${absToRel(file)} ${chalk.gray('valid')}`);
+				options.silent ||
+					console.log(
+						`${chalk.green('✓')} ${absToRel(file)} ${chalk.gray('valid')}`,
+					);
 			}
 			else {
-				options.silent || console.log(`${chalk.red('✖')} ${absToRel(file)} ${chalk.gray('invalid')}`);
+				options.silent ||
+					console.log(
+						`${chalk.red('✖')} ${absToRel(file)} ${chalk.gray('invalid')}`,
+					);
 			}
 		}
 		else {
 			if (ok) {
-				options.silent || console.log(`${chalk.green('✓')} ${absToRel(file)} ${chalk.gray('valid')}`);
+				options.silent ||
+					console.log(
+						`${chalk.green('✓')} ${absToRel(file)} ${chalk.gray('valid')}`,
+					);
 			}
 			else {
 				await fs.writeFile(file, formatted);
-				options.silent || console.log(`${chalk.yellow('*')} ${absToRel(file)} ${chalk.gray('formatted')}`);
+				options.silent ||
+					console.log(
+						`${chalk.yellow('*')} ${absToRel(file)} ${chalk.gray('formatted')}`,
+					);
 			}
 		}
 
@@ -146,7 +163,7 @@ export async function format(filter : string, options : Partial<FormatOptions> =
 	if (!options.silent) {
 		console.log('-'.repeat(50));
 
-		let plural = (n : number) => n === 1 ? '' : 's';
+		let plural = (n : number) => (n === 1 ? '' : 's');
 		let str = `Checked ${chalk.gray(files.length)} file${plural(files.length)} in ${chalk.gray(((Date.now() - startTime) / 1000).toFixed(2) + 's')}`;
 		if (invalidFiles) {
 			str += options.check
@@ -161,7 +178,9 @@ export async function format(filter : string, options : Partial<FormatOptions> =
 	}
 
 	if (options.check && invalidFiles && !options.silent) {
-		console.log(`${(`Run '${chalk.yellow('mops format' + (filter ? ` ${filter}` : ''))}' to format your code`)}`);
+		console.log(
+			`${`Run '${chalk.yellow('mops format' + (filter ? ` ${filter}` : ''))}' to format your code`}`,
+		);
 		return getResult(false);
 	}
 

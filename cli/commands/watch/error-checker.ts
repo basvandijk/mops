@@ -17,7 +17,13 @@ export class ErrorChecker {
 	totalFiles = 0;
 	processedFiles = 0;
 
-	constructor({verbose, canisters} : {verbose : boolean, canisters : Record<string, string>}) {
+	constructor({
+		verbose,
+		canisters,
+	} : {
+		verbose : boolean;
+		canisters : Record<string, string>;
+	}) {
 		this.verbose = verbose;
 		this.canisters = canisters;
 	}
@@ -46,7 +52,11 @@ export class ErrorChecker {
 
 		await parallel(os.cpus().length, paths, async (file) => {
 			try {
-				await promisify(execFile)(mocPath, ['--check', ...deps.flatMap(x => x.split(' ')), file], {cwd: rootDir});
+				await promisify(execFile)(
+					mocPath,
+					['--check', ...deps.flatMap((x) => x.split(' ')), file],
+					{cwd: rootDir},
+				);
 			}
 			catch (error : any) {
 				error.message.split('\n').forEach((line : string) => {
@@ -55,7 +65,10 @@ export class ErrorChecker {
 						let str = line
 							.replace(/: (\w+ error) \[/, (_, m1) => `: ${chalk.red(m1)} [`)
 							.replace(/unbound type (\w+)/, `unbound type ${chalk.bold('$1')}`)
-							.replace(/unbound variable (\w+)/, `unbound variable ${chalk.bold('$1')}`)
+							.replace(
+								/unbound variable (\w+)/,
+								`unbound variable ${chalk.bold('$1')}`,
+							)
 							.trim();
 						this.errors.push(str);
 					}

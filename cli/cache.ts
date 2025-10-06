@@ -3,7 +3,13 @@ import path from 'node:path';
 import ncp from 'ncp';
 import getFolderSize from 'get-folder-size';
 
-import {getDependencyType, getNetwork, getRootDir, globalCacheDir, parseGithubURL} from './mops.js';
+import {
+	getDependencyType,
+	getNetwork,
+	getRootDir,
+	globalCacheDir,
+	parseGithubURL,
+} from './mops.js';
 import {getPackageId} from './helpers/get-package-id.js';
 
 let getGlobalCacheDir = () => {
@@ -26,7 +32,9 @@ export let isDepCached = (cacheName : string) => {
 
 export function getDepCacheName(name : string, version : string) {
 	let depType = getDependencyType(version);
-	return depType === 'mops' ? getMopsDepCacheName(name, version) : getGithubDepCacheName(name, version);
+	return depType === 'mops'
+		? getMopsDepCacheName(name, version)
+		: getGithubDepCacheName(name, version);
 }
 
 export function getMopsDepCacheName(name : string, version : string) {
@@ -35,7 +43,10 @@ export function getMopsDepCacheName(name : string, version : string) {
 
 export function getGithubDepCacheName(name : string, repo : string) {
 	const {branch, commitHash} = parseGithubURL(repo);
-	return `_github/${name}#${branch.replaceAll('/', '___')}` + (commitHash ? `@${commitHash}` : '');
+	return (
+		`_github/${name}#${branch.replaceAll('/', '___')}` +
+		(commitHash ? `@${commitHash}` : '')
+	);
 }
 
 export let addCache = (cacheName : string, source : string) => {
@@ -78,7 +89,11 @@ export let cacheSize = async () => {
 };
 
 export let cleanCache = async () => {
-	if (!getGlobalCacheDir().endsWith('mops/cache') && !getGlobalCacheDir().endsWith('/mops') && !getGlobalCacheDir().endsWith('/mops/' + getNetwork())) {
+	if (
+		!getGlobalCacheDir().endsWith('mops/cache') &&
+		!getGlobalCacheDir().endsWith('/mops') &&
+		!getGlobalCacheDir().endsWith('/mops/' + getNetwork())
+	) {
 		throw new Error('Invalid cache directory: ' + getGlobalCacheDir());
 	}
 

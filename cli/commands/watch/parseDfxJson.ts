@@ -52,14 +52,20 @@ export function readDfxJson() : DfxConfig | Record<string, never> {
 
 export function getMotokoCanisters() : Record<string, string> {
 	let dfxJson = readDfxJson();
-	return Object.fromEntries(Object.entries(dfxJson.canisters || {})
-		.filter(([_, canister]) => canister.type === 'motoko')
-		.map(([name, canister]) => [name, canister.main ?? '']));
+	return Object.fromEntries(
+		Object.entries(dfxJson.canisters || {})
+			.filter(([_, canister]) => canister.type === 'motoko')
+			.map(([name, canister]) => [name, canister.main ?? '']),
+	);
 }
 
 export function getMotokoCanistersWithDeclarations() : Record<string, string> {
 	let dfxJson = readDfxJson();
-	return Object.fromEntries(Object.entries(dfxJson.canisters || {})
-		.filter(([_, canister]) => canister.type === 'motoko' && canister.declarations)
-		.map(([name, canister]) => [name, canister.main ?? '']));
+	return Object.fromEntries(
+		Object.entries(dfxJson.canisters || {})
+			.filter(
+				([_, canister]) => canister.type === 'motoko' && canister.declarations,
+			)
+			.map(([name, canister]) => [name, canister.main ?? '']),
+	);
 }

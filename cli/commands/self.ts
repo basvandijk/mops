@@ -47,7 +47,11 @@ export async function update() {
 		let pm = detectPackageManager();
 		let npmArgs = pm === 'npm' ? ['--no-fund', '--silent'] : [];
 
-		let proc = child_process.spawn(pm, ['add', '-g', ...npmArgs, `${url}/versions/${latest}.tgz`], {stdio: 'inherit', detached: false});
+		let proc = child_process.spawn(
+			pm,
+			['add', '-g', ...npmArgs, `${url}/versions/${latest}.tgz`],
+			{stdio: 'inherit', detached: false},
+		);
 
 		proc.on('exit', (res) => {
 			if (res !== 0) {
@@ -68,9 +72,14 @@ export async function uninstall() {
 
 	console.log('Uninstalling mops CLI...');
 	let pm = detectPackageManager();
-	child_process.spawn(pm, ['remove', '-g', '--silent', 'ic-mops'], {stdio: 'inherit', detached: false});
+	child_process.spawn(pm, ['remove', '-g', '--silent', 'ic-mops'], {
+		stdio: 'inherit',
+		detached: false,
+	});
 
-	console.log(chalk.yellow('Config directory has not been deleted: ' + globalConfigDir));
+	console.log(
+		chalk.yellow('Config directory has not been deleted: ' + globalConfigDir),
+	);
 
 	console.log('Uninstalled');
 }

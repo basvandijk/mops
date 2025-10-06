@@ -11,7 +11,13 @@ import {getRootDir} from '../../mops.js';
 export class Deployer {
 	verbose = false;
 	canisters : Record<string, string> = {};
-	status : 'pending' | 'running' | 'syntax-error' | 'dfx-error' | 'error' | 'success' = 'pending';
+	status :
+		| 'pending'
+		| 'running'
+		| 'syntax-error'
+		| 'dfx-error'
+		| 'error'
+		| 'success' = 'pending';
 	errorChecker : ErrorChecker;
 	generator : Generator;
 	success = 0;
@@ -20,7 +26,17 @@ export class Deployer {
 	controllers = new Map<string, AbortController>();
 	currentRun : Promise<any> | undefined;
 
-	constructor({verbose, canisters, errorChecker, generator} : {verbose : boolean, canisters : Record<string, string>, errorChecker : ErrorChecker, generator : Generator}) {
+	constructor({
+		verbose,
+		canisters,
+		errorChecker,
+		generator,
+	} : {
+		verbose : boolean;
+		canisters : Record<string, string>;
+		errorChecker : ErrorChecker;
+		generator : Generator;
+	}) {
 		this.verbose = verbose;
 		this.canisters = canisters;
 		this.errorChecker = errorChecker;
@@ -75,13 +91,16 @@ export class Deployer {
 
 		// create canisters (sequentially to avoid DFX errors)
 		let resolve : (() => void) | undefined;
-		this.currentRun = new Promise<void>((res) => resolve = res);
+		this.currentRun = new Promise<void>((res) => (resolve = res));
 		for (let canister of Object.keys(this.canisters)) {
 			let controller = new AbortController();
 			let {signal} = controller;
 			this.controllers.set(canister, controller);
 
-			await promisify(execFile)('dfx', ['canister', 'create', canister], {cwd: rootDir, signal}).catch((error) => {
+			await promisify(execFile)('dfx', ['canister', 'create', canister], {
+				cwd: rootDir,
+				signal,
+			}).catch((error) => {
 				if (error.code === 'ABORT_ERR') {
 					return {stderr: ''};
 				}
@@ -97,33 +116,47 @@ export class Deployer {
 			return;
 		}
 
-		this.currentRun = parallel(os.cpus().length, [...Object.keys(this.canisters)], async (canister) => {
-			let controller = new AbortController();
-			let {signal} = controller;
-			this.controllers.set(canister, controller);
+		this.currentRun = parallel(
+			os.cpus().length,
+			[...Object.keys(this.canisters)],
+			async (canister) => {
+				let controller = new AbortController();
+				let {signal} = controller;
+				this.controllers.set(canister, controller);
 
-			// build
-			if (this.generator.status !== 'success' || !this.generator.canisters[canister]) {
-				await promisify(execFile)('dfx', ['build', canister], {cwd: rootDir, signal}).catch((error) => {
+				// build
+				if (
+					this.generator.status !== 'success' ||
+					!this.generator.canisters[canister]
+				) {
+					await promisify(execFile)('dfx', ['build', canister], {
+						cwd: rootDir,
+						signal,
+					}).catch((error) => {
+						if (error.code === 'ABORT_ERR') {
+							return {stderr: ''};
+						}
+						throw error;
+					});
+				}
+
+				// install
+				await promisify(execFile)(
+					'dfx',
+					['canister', 'install', '--mode=auto', '--yes', canister],
+					{cwd: rootDir, signal},
+				).catch((error) => {
 					if (error.code === 'ABORT_ERR') {
 						return {stderr: ''};
 					}
 					throw error;
 				});
-			}
 
-			// install
-			await promisify(execFile)('dfx', ['canister', 'install', '--mode=auto', '--yes', canister], {cwd: rootDir, signal}).catch((error) => {
-				if (error.code === 'ABORT_ERR') {
-					return {stderr: ''};
-				}
-				throw error;
-			});
-
-			this.success += 1;
-			this.controllers.delete(canister);
-			onProgress();
-		});
+				this.success += 1;
+				this.controllers.delete(canister);
+				onProgress();
+			},
+		);
 
 		await this.currentRun;
 
@@ -135,7 +168,11 @@ export class Deployer {
 
 	getOutput() : string {
 		let get = (v : number) => v.toString();
-		let count = (this.status === 'running' ? get : chalk.bold[this.errors.length > 0 ? 'redBright' : 'green'])(this.errors.length || this.success);
+		let count = (
+			this.status === 'running'
+				? get
+				: chalk.bold[this.errors.length > 0 ? 'redBright' : 'green']
+		)(this.errors.length || this.success);
 
 		if (this.status === 'pending') {
 			return `Deploy: ${chalk.gray('(pending)')}`;

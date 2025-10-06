@@ -21,22 +21,29 @@ export async function search(text : string) {
 		}
 	};
 
-	let maxNameLength = Math.max(...packages.map(a => a.config.name.length));
+	let maxNameLength = Math.max(...packages.map((a) => a.config.name.length));
 
 	let table = packages.map((item) => {
 		return {
 			NAME: chalk.bold(item.config.name),
-			DESCRIPTION: ellipsis(item.config.description, process.stdout.columns - 40 - maxNameLength),
+			DESCRIPTION: ellipsis(
+				item.config.description,
+				process.stdout.columns - 40 - maxNameLength,
+			),
 			VERSION: item.config.version,
-			UPDATED: new Date(Number(item.publication.time / 1_000_000n)).toISOString().split('T')[0],
+			UPDATED: new Date(Number(item.publication.time / 1_000_000n))
+				.toISOString()
+				.split('T')[0],
 		};
 	});
 
 	console.log('');
-	console.log(asTable.configure({
-		delimiter: chalk.gray(' | '),
-		dash: chalk.gray('─'),
-		title: t => chalk.gray.bold(t),
-	})(table));
+	console.log(
+		asTable.configure({
+			delimiter: chalk.gray(' | '),
+			dash: chalk.gray('─'),
+			title: (t) => chalk.gray.bold(t),
+		})(table),
+	);
 	console.log('');
 }

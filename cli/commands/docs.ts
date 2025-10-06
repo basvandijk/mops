@@ -14,11 +14,11 @@ import {toolchain} from './toolchain/index.js';
 let moDocPath : string;
 
 type DocsOptions = {
-	source : string,
-	output : string,
-	format : 'md' | 'adoc' | 'html',
-	silent : boolean,
-	archive : boolean,
+	source : string;
+	output : string;
+	format : 'md' | 'adoc' | 'html';
+	silent : boolean;
+	archive : boolean;
 };
 
 export async function docs(options : Partial<DocsOptions> = {}) {
@@ -42,7 +42,10 @@ export async function docs(options : Partial<DocsOptions> = {}) {
 	deleteSync([docsDir], {force: true});
 
 	// detect mocv (legacy)
-	if (process.env.DFX_MOC_PATH && process.env.DFX_MOC_PATH.includes('mocv/versions')) {
+	if (
+		process.env.DFX_MOC_PATH &&
+		process.env.DFX_MOC_PATH.includes('mocv/versions')
+	) {
 		moDocPath = process.env.DFX_MOC_PATH.replace(/\/moc$/, '/mo-doc');
 	}
 	else {
@@ -64,7 +67,10 @@ export async function docs(options : Partial<DocsOptions> = {}) {
 			let text = data.toString().trim();
 			let failedText = 'Failed to extract documentation';
 			if (text.includes(failedText)) {
-				silent ||console.log(text.replaceAll(failedText, chalk.yellow('Warning: ') + failedText));
+				silent ||
+					console.log(
+						text.replaceAll(failedText, chalk.yellow('Warning: ') + failedText),
+					);
 			}
 			silent || console.log('stdout', text);
 		});
@@ -77,7 +83,10 @@ export async function docs(options : Partial<DocsOptions> = {}) {
 				console.log(chalk.red('Error:'), text);
 				process.exit(1);
 			}
-			if (text.includes('No such file or directory') || text.includes('Couldn\'t find a module expression')) {
+			if (
+				text.includes('No such file or directory') ||
+				text.includes('Couldn\'t find a module expression')
+			) {
 				silent || console.log(text);
 				return;
 			}
@@ -101,11 +110,10 @@ export async function docs(options : Partial<DocsOptions> = {}) {
 
 	// create archive
 	if (archive) {
-		let ignore = [
-			`${docsDir}/**/*.test.adoc`,
-			`${docsDir}/test/**/*`,
-		];
-		let files = globSync(`${docsDir}/**/*.adoc`, {ignore}).map(f => path.relative(docsDir, f));
+		let ignore = [`${docsDir}/**/*.test.adoc`, `${docsDir}/test/**/*`];
+		let files = globSync(`${docsDir}/**/*.adoc`, {ignore}).map((f) =>
+			path.relative(docsDir, f),
+		);
 		files.sort();
 		if (files.length) {
 			let stream = createTar(
@@ -114,11 +122,14 @@ export async function docs(options : Partial<DocsOptions> = {}) {
 					gzip: true,
 					portable: true,
 				},
-				files
+				files,
 			).pipe(fs.createWriteStream(path.join(docsDir, 'docs.tgz')));
 			await streamToPromise(stream);
 		}
 	}
 
-	silent || console.log(`${chalk.green('Documentation generated')} at ${docsDirRelative}`);
+	silent ||
+		console.log(
+			`${chalk.green('Documentation generated')} at ${docsDirRelative}`,
+		);
 }

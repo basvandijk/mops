@@ -4,12 +4,17 @@ import {globSync} from 'glob';
 import {JSDOM} from 'jsdom';
 import {docs} from './docs.js';
 
-export type DocsCoverageReporter = 'compact' | 'files' | 'missing' | 'verbose' | 'silent';
+export type DocsCoverageReporter =
+	| 'compact'
+	| 'files'
+	| 'missing'
+	| 'verbose'
+	| 'silent';
 
 type DocsCoverageOptions = {
-	source : string,
-	reporter : DocsCoverageReporter,
-	threshold : number,
+	source : string;
+	reporter : DocsCoverageReporter;
+	threshold : number;
 };
 
 export async function docsCoverage(options : Partial<DocsCoverageOptions> = {}) {
@@ -29,7 +34,9 @@ export async function docsCoverage(options : Partial<DocsCoverageOptions> = {}) 
 		silent: true,
 	});
 
-	let files = globSync(`${docsDir}/**/*.html`, {ignore: [`${docsDir}/**/index.html`]});
+	let files = globSync(`${docsDir}/**/*.html`, {
+		ignore: [`${docsDir}/**/index.html`],
+	});
 	let coverages = [];
 
 	for (let file of files) {
@@ -39,19 +46,26 @@ export async function docsCoverage(options : Partial<DocsCoverageOptions> = {}) 
 		if (reporter === 'silent') {
 			continue;
 		}
-		if (reporter !== 'compact' && (reporter !== 'missing' || coverage.coverage < 100)) {
+		if (
+			reporter !== 'compact' &&
+			(reporter !== 'missing' || coverage.coverage < 100)
+		) {
 			console.log(`• ${coverage.file} ${colorizeCoverage(coverage.coverage)}`);
 		}
 		if (reporter === 'missing' && coverage.coverage < 100) {
 			for (let item of coverage.items) {
 				if (!item.covered) {
-					console.log(`  ${item.covered ? chalk.green('✓') : chalk.red('✖')} ${item.id} ${chalk.gray(item.type)}`);
+					console.log(
+						`  ${item.covered ? chalk.green('✓') : chalk.red('✖')} ${item.id} ${chalk.gray(item.type)}`,
+					);
 				}
 			}
 		}
 		else if (reporter === 'verbose') {
 			for (let item of coverage.items) {
-				console.log(`  ${item.covered ? chalk.green('✓') : chalk.red('✖')} ${item.id} ${chalk.gray(item.type)}`);
+				console.log(
+					`  ${item.covered ? chalk.green('✓') : chalk.red('✖')} ${item.id} ${chalk.gray(item.type)}`,
+				);
 			}
 		}
 	}
@@ -60,7 +74,9 @@ export async function docsCoverage(options : Partial<DocsCoverageOptions> = {}) 
 		console.log('-'.repeat(50));
 	}
 
-	let totalCoverage = coverages.reduce((acc, coverage) => acc + coverage.coverage, 0) / (coverages.length || 1);
+	let totalCoverage =
+		coverages.reduce((acc, coverage) => acc + coverage.coverage, 0) /
+		(coverages.length || 1);
 	if (reporter !== 'silent') {
 		console.log(`Documentation coverage: ${colorizeCoverage(totalCoverage)}`);
 	}
@@ -78,12 +94,21 @@ function docFileCoverage(file : string) {
 	let module = dom.window.document.querySelector('h1')?.textContent || '';
 	let moduleFile = `${module}.mo`;
 
-	let items = [...dom.window.document.querySelectorAll('h4')].map(h4 => {
+	let items = [...dom.window.document.querySelectorAll('h4')].map((h4) => {
 		let id = h4.getAttribute('id')?.replace('type.', '');
-		let type = h4.className.replace('-declaration', '').replace('function', 'func');
+		let type = h4.className
+			.replace('-declaration', '')
+			.replace('function', 'func');
 		let definition = h4.textContent;
 		let comment = h4.parentElement?.querySelector('p + p')?.textContent;
-		return {file: moduleFile, id, type, definition, comment, covered: (comment || '').length >= 5};
+		return {
+			file: moduleFile,
+			id,
+			type,
+			definition,
+			comment,
+			covered: (comment || '').length >= 5,
+		};
 	});
 
 	let coverage = 0;
@@ -91,7 +116,8 @@ function docFileCoverage(file : string) {
 		coverage = 100;
 	}
 	else {
-		coverage = items.filter(item => item.covered).length / items.length * 100;
+		coverage =
+			(items.filter((item) => item.covered).length / items.length) * 100;
 	}
 
 	return {file: moduleFile, coverage, items};

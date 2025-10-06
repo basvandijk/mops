@@ -1,4 +1,8 @@
-export async function parallel<T>(threads : number, items : T[], fn : (item : T) => Promise<void>) {
+export async function parallel<T>(
+	threads : number,
+	items : T[],
+	fn : (item : T) => Promise<void>,
+) {
 	return new Promise<void>((resolve) => {
 		let busyThreads = 0;
 		items = items.slice();

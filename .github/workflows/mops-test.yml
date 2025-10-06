@@ -13,7 +13,13 @@ jobs:
       max-parallel: 4
       fail-fast: false
       matrix:
-        mops-version: [./cli/dist, ic-mops, ic-mops@1.0.0, "https://cli.mops.one/versions/latest.tgz"]
+        mops-version:
+          [
+            ./cli/dist,
+            ic-mops,
+            ic-mops@1.0.0,
+            "https://cli.mops.one/versions/latest.tgz",
+          ]
         moc-version: [0.14.13]
         node-version: [20, 24]
         runner: [ubuntu-latest]
@@ -29,7 +35,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
       - uses: dfinity/setup-dfx@main
       - run: dfx cache install
       - name: Cache mops packages

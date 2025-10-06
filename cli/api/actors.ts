@@ -22,7 +22,8 @@ let getAgent = async (identity ?: Identity) : Promise<HttpAgent> => {
 			host,
 			identity,
 			shouldFetchRootKey: network === 'local',
-			verifyQuerySignatures: process.env.MOPS_VERIFY_QUERY_SIGNATURES !== 'false',
+			verifyQuerySignatures:
+				process.env.MOPS_VERIFY_QUERY_SIGNATURES !== 'false',
 			shouldSyncTime: true,
 		});
 
@@ -43,7 +44,10 @@ export let mainActor = async (identity ?: Identity) : Promise<_SERVICE> => {
 	});
 };
 
-export let storageActor = async (storageId : Principal, identity ?: Identity) : Promise<_STORAGE_SERVICE> => {
+export let storageActor = async (
+	storageId : Principal,
+	identity ?: Identity,
+) : Promise<_STORAGE_SERVICE> => {
 	let agent = await getAgent(identity);
 
 	return Actor.createActor(storageIdlFactory, {

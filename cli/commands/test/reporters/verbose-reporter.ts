@@ -20,7 +20,13 @@ export class VerboseReporter implements Reporter {
 		console.log('='.repeat(50));
 	}
 
-	addRun(file : string, mmf : MMF1, state : Promise<void>, mode : TestMode, progressive = false) {
+	addRun(
+		file : string,
+		mmf : MMF1,
+		state : Promise<void>,
+		mode : TestMode,
+		progressive = false,
+	) {
 		if (progressive) {
 			this._printStart(file, mode);
 		}
@@ -49,10 +55,15 @@ export class VerboseReporter implements Reporter {
 			console.log(chalk.greenBright('Tests passed'));
 		}
 
-		console.log(`Done in ${chalk.gray(((Date.now() - this.#startTime) / 1000).toFixed(2) + 's')}`
-			+ `, passed ${chalk.greenBright(this.passed)}`
-			+ (this.skipped ? `, skipped ${chalk[this.skipped ? 'yellowBright' : 'gray'](this.skipped)}` : '')
-			+ (this.failed ? `, failed ${chalk[this.failed ? 'redBright' : 'gray'](this.failed)}` : '')
+		console.log(
+			`Done in ${chalk.gray(((Date.now() - this.#startTime) / 1000).toFixed(2) + 's')}` +
+				`, passed ${chalk.greenBright(this.passed)}` +
+				(this.skipped
+					? `, skipped ${chalk[this.skipped ? 'yellowBright' : 'gray'](this.skipped)}`
+					: '') +
+				(this.failed
+					? `, failed ${chalk[this.failed ? 'redBright' : 'gray'](this.failed)}`
+					: ''),
 		);
 
 		return this.failed === 0;
@@ -60,6 +71,8 @@ export class VerboseReporter implements Reporter {
 
 	_printStart(file : string, mode : TestMode) {
 		this.#curFileIndex++ && console.log('-'.repeat(50));
-		console.log(`Running ${chalk.gray(absToRel(file))} ${mode === 'interpreter' ? '' : chalk.gray(`(${mode})`)}`);
+		console.log(
+			`Running ${chalk.gray(absToRel(file))} ${mode === 'interpreter' ? '' : chalk.gray(`(${mode})`)}`,
+		);
 	}
 }

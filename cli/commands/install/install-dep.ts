@@ -14,9 +14,17 @@ type InstallDepOptions = {
 
 // install dependency
 // returns false if failed
-export async function installDep(dep : Dependency, {verbose, silent, threads, ignoreTransitive} : InstallDepOptions = {}, parentPkgPath ?: string) : Promise<boolean> {
+export async function installDep(
+	dep : Dependency,
+	{verbose, silent, threads, ignoreTransitive} : InstallDepOptions = {},
+	parentPkgPath ?: string,
+) : Promise<boolean> {
 	if (dep.repo) {
-		await installFromGithub(dep.name, dep.repo, {silent, verbose, ignoreTransitive});
+		await installFromGithub(dep.name, dep.repo, {
+			silent,
+			verbose,
+			ignoreTransitive,
+		});
 		return true;
 	}
 	else if (dep.path) {
@@ -25,10 +33,19 @@ export async function installDep(dep : Dependency, {verbose, silent, threads, ig
 		if (parentPkgPath) {
 			depPath = path.resolve(parentPkgPath, dep.path);
 		}
-		return installLocalDep(dep.name, depPath, {silent, verbose, ignoreTransitive});
+		return installLocalDep(dep.name, depPath, {
+			silent,
+			verbose,
+			ignoreTransitive,
+		});
 	}
 	else if (dep.version) {
-		return installMopsDep(dep.name, dep.version, {silent, verbose, threads, ignoreTransitive});
+		return installMopsDep(dep.name, dep.version, {
+			silent,
+			verbose,
+			threads,
+			ignoreTransitive,
+		});
 	}
 
 	return true;

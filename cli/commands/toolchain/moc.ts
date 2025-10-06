@@ -23,7 +23,10 @@ export let isCached = (version : string) => {
 	return fs.existsSync(dir) && fs.existsSync(path.join(dir, 'moc'));
 };
 
-export let download = async (version : string, {silent = false, verbose = false} = {}) => {
+export let download = async (
+	version : string,
+	{silent = false, verbose = false} = {},
+) => {
 	if (process.platform == 'win32') {
 		console.error('Windows is not supported. Please use WSL');
 		process.exit(1);
@@ -43,7 +46,9 @@ export let download = async (version : string, {silent = false, verbose = false}
 	if (new SemVer(version).compare(new SemVer('0.14.6')) >= 0) {
 		let platfrom = process.platform == 'darwin' ? 'Darwin' : 'Linux';
 		let arch = process.arch.startsWith('arm')
-			? (process.platform == 'darwin' ? 'arm64' : 'aarch64')
+			? process.platform == 'darwin'
+				? 'arm64'
+				: 'aarch64'
 			: 'x86_64';
 		url = `https://github.com/dfinity/motoko/releases/download/${version}/motoko-${platfrom}-${arch}-${version}.tar.gz`;
 	}

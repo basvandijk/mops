@@ -10,7 +10,8 @@ import {getRootDir} from '../../mops.js';
 export class Generator {
 	verbose = false;
 	canisters : Record<string, string> = {};
-	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' = 'pending';
+	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' =
+		'pending';
 	errorChecker : ErrorChecker;
 	success = 0;
 	errors : string[] = [];
@@ -18,7 +19,15 @@ export class Generator {
 	controllers = new Map<string, AbortController>();
 	currentRun : Promise<any> | undefined;
 
-	constructor({verbose, canisters, errorChecker} : {verbose : boolean, canisters : Record<string, string>, errorChecker : ErrorChecker}) {
+	constructor({
+		verbose,
+		canisters,
+		errorChecker,
+	} : {
+		verbose : boolean;
+		canisters : Record<string, string>;
+		errorChecker : ErrorChecker;
+	}) {
 		this.verbose = verbose;
 		this.canisters = canisters;
 		this.errorChecker = errorChecker;
@@ -55,22 +64,29 @@ export class Generator {
 
 		let rootDir = getRootDir();
 
-		this.currentRun = parallel(os.cpus().length, [...Object.keys(this.canisters)], async (canister) => {
-			let controller = new AbortController();
-			let {signal} = controller;
-			this.controllers.set(canister, controller);
+		this.currentRun = parallel(
+			os.cpus().length,
+			[...Object.keys(this.canisters)],
+			async (canister) => {
+				let controller = new AbortController();
+				let {signal} = controller;
+				this.controllers.set(canister, controller);
 
-			await promisify(execFile)('dfx', ['generate', canister], {cwd: rootDir, signal}).catch((error) => {
-				if (error.code === 'ABORT_ERR') {
-					return {stderr: ''};
-				}
-				throw error;
-			});
+				await promisify(execFile)('dfx', ['generate', canister], {
+					cwd: rootDir,
+					signal,
+				}).catch((error) => {
+					if (error.code === 'ABORT_ERR') {
+						return {stderr: ''};
+					}
+					throw error;
+				});
 
-			this.success += 1;
-			this.controllers.delete(canister);
-			onProgress();
-		});
+				this.success += 1;
+				this.controllers.delete(canister);
+				onProgress();
+			},
+		);
 
 		await this.currentRun;
 
@@ -82,7 +98,11 @@ export class Generator {
 
 	getOutput() : string {
 		let get = (v : number) => v.toString();
-		let count = (this.status === 'running' ? get : chalk.bold[this.errors.length > 0 ? 'redBright' : 'green'])(this.errors.length || this.success);
+		let count = (
+			this.status === 'running'
+				? get
+				: chalk.bold[this.errors.length > 0 ? 'redBright' : 'green']
+		)(this.errors.length || this.success);
 
 		if (this.status === 'pending') {
 			return `Generate: ${chalk.gray('(pending)')}`;

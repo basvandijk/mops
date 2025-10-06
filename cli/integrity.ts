@@ -36,7 +36,11 @@ type LockFile = LockFileV1 | LockFileV2 | LockFileV3;
 export async function checkIntegrity(lock ?: 'check' | 'update' | 'ignore') {
 	let force = !!lock;
 
-	if (!lock && !process.env['CI'] && fs.existsSync(path.join(getRootDir(), 'mops.lock'))) {
+	if (
+		!lock &&
+		!process.env['CI'] &&
+		fs.existsSync(path.join(getRootDir(), 'mops.lock'))
+	) {
 		lock = 'update';
 	}
 
@@ -53,10 +57,13 @@ export async function checkIntegrity(lock ?: 'check' | 'update' | 'ignore') {
 	}
 }
 
-async function getFileHashesFromRegistry() : Promise<[string, [string, Uint8Array | number[]][]][]> {
+async function getFileHashesFromRegistry() : Promise<
+	[string, [string, Uint8Array | number[]][]][]
+	> {
 	let packageIds = await getResolvedMopsPackageIds();
 	let actor = await mainActor();
-	let fileHashesByPackageIds = await actor.getFileHashesByPackageIds(packageIds);
+	let fileHashesByPackageIds =
+		await actor.getFileHashesByPackageIds(packageIds);
 	return fileHashesByPackageIds;
 }
 
@@ -90,10 +97,19 @@ function getMopsTomlDepsHash() : string {
 	let devDeps = config['dev-dependencies'] || {};
 	let allDeps = {...deps, ...devDeps};
 	// sort allDeps by key
-	let sortedDeps = Object.keys(allDeps).sort().reduce((acc, key) => {
-		acc[key] = allDeps[key]?.version || allDeps[key]?.repo || allDeps[key]?.path || '';
-		return acc;
-	}, {} as Record<string, string>);
+	let sortedDeps = Object.keys(allDeps)
+		.sort()
+		.reduce(
+			(acc, key) => {
+				acc[key] =
+					allDeps[key]?.version ||
+					allDeps[key]?.repo ||
+					allDeps[key]?.path ||
+					'';
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 	return bytesToHex(sha256(JSON.stringify(sortedDeps)));
 }
 
@@ -109,7 +125,9 @@ export async function checkRemote() {
 
 			if (localHash !== bytesToHex(remoteHash)) {
 				console.error('Integrity check failed.');
-				console.error(`Mismatched hash for ${fileId}: ${localHash} vs ${bytesToHex(remoteHash)}`);
+				console.error(
+					`Mismatched hash for ${fileId}: ${localHash} vs ${bytesToHex(remoteHash)}`,
+				);
 				process.exit(1);
 			}
 		}
@@ -130,7 +148,10 @@ export function checkLockFileLight() : boolean {
 	let existingLockFileJson = readLockFile();
 	if (existingLockFileJson) {
 		let mopsTomlDepsHash = getMopsTomlDepsHash();
-		if (existingLockFileJson.version === 3 && mopsTomlDepsHash === existingLockFileJson.mopsTomlDepsHash) {
+		if (
+			existingLockFileJson.version === 3 &&
+			mopsTomlDepsHash === existingLockFileJson.mopsTomlDepsHash
+		) {
 			return true;
 		}
 	}
@@ -151,13 +172,19 @@ export async function updateLockFile() {
 		version: 3,
 		mopsTomlDepsHash: getMopsTomlDepsHash(),
 		deps: resolvedDeps,
-		hashes: fileHashes.reduce((acc, [packageId, fileHashes]) => {
-			acc[packageId] = fileHashes.reduce((acc, [fileId, hash]) => {
-				acc[fileId] = bytesToHex(new Uint8Array(hash));
+		hashes: fileHashes.reduce(
+			(acc, [packageId, fileHashes]) => {
+				acc[packageId] = fileHashes.reduce(
+					(acc, [fileId, hash]) => {
+						acc[fileId] = bytesToHex(new Uint8Array(hash));
+						return acc;
+					},
+					{} as Record<string, string>,
+				);
 				return acc;
-			}, {} as Record<string, string>);
-			return acc;
-		}, {} as Record<string, Record<string, string>>),
+			},
+			{} as Record<string, Record<string, string>>,
+		),
 	};
 
 	let rootDir = getRootDir();
@@ -180,13 +207,17 @@ export async function checkLockFile(force = false) {
 		return;
 	}
 
-	let lockFileJsonGeneric : LockFileGeneric = JSON.parse(fs.readFileSync(lockFile).toString());
+	let lockFileJsonGeneric : LockFileGeneric = JSON.parse(
+		fs.readFileSync(lockFile).toString(),
+	);
 	let packageIds = await getResolvedMopsPackageIds();
 
 	// check lock file version
 	if (!supportedVersions.includes(lockFileJsonGeneric.version)) {
 		console.error('Integrity check failed');
-		console.error(`Invalid lock file version: ${lockFileJsonGeneric.version}. Supported versions: ${supportedVersions.join(', ')}`);
+		console.error(
+			`Invalid lock file version: ${lockFileJsonGeneric.version}. Supported versions: ${supportedVersions.join(', ')}`,
+		);
 		process.exit(1);
 	}
 
@@ -233,7 +264,9 @@ export async function checkLockFile(force = false) {
 	// check number of packages
 	if (Object.keys(lockFileJson.hashes).length !== packageIds.length) {
 		console.error('Integrity check failed');
-		console.error(`Mismatched number of resolved packages: ${JSON.stringify(Object.keys(lockFileJson.hashes).length)} vs ${JSON.stringify(packageIds.length)}`);
+		console.error(
+			`Mismatched number of resolved packages: ${JSON.stringify(Object.keys(lockFileJson.hashes).length)} vs ${JSON.stringify(packageIds.length)}`,
+		);
 		process.exit(1);
 	}
 
@@ -247,20 +280,22 @@ export async function checkLockFile(force = false) {
 	}
 
 	for (let [packageId, hashes] of Object.entries(lockFileJson.hashes)) {
-
 		// check if package is in resolved packages
 		if (!packageIds.includes(packageId)) {
 			console.error('Integrity check failed');
-			console.error(`Package ${packageId} in lock file but not in resolved packages`);
+			console.error(
+				`Package ${packageId} in lock file but not in resolved packages`,
+			);
 			process.exit(1);
 		}
 
 		for (let [fileId, lockedHash] of Object.entries(hashes)) {
-
 			// check if file belongs to package
 			if (!fileId.startsWith(packageId)) {
 				console.error('Integrity check failed');
-				console.error(`File ${fileId} in lock file does not belong to package ${packageId}`);
+				console.error(
+					`File ${fileId} in lock file does not belong to package ${packageId}`,
+				);
 				process.exit(1);
 			}
 

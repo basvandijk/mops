@@ -14,7 +14,6 @@ import {getNetwork} from './api/network.js';
 import {getHighestVersion} from './api/getHighestVersion.js';
 import {getPackageId} from './helpers/get-package-id.js';
 
-
 if (!globalThis.fetch) {
 	globalThis.fetch = fetch as any;
 }
@@ -31,7 +30,10 @@ if (process.platform == 'win32') {
 	globalCacheDir = path.join(process.env.LOCALAPPDATA || '', 'mops/cache');
 }
 else if (process.platform == 'darwin') {
-	globalConfigDir = path.join(process.env.HOME || '', 'Library/Application Support/mops');
+	globalConfigDir = path.join(
+		process.env.HOME || '',
+		'Library/Application Support/mops',
+	);
 	globalCacheDir = path.join(process.env.HOME || '', 'Library/Caches/mops');
 }
 else {
@@ -63,7 +65,10 @@ export function setNetwork(network : string) {
 
 export let getIdentity = async () : Promise<Identity | undefined> => {
 	let identityPem = path.resolve(globalConfigDir, 'identity.pem');
-	let identityPemEncrypted = path.resolve(globalConfigDir, 'identity.pem.encrypted');
+	let identityPemEncrypted = path.resolve(
+		globalConfigDir,
+		'identity.pem.encrypted',
+	);
 	if (fs.existsSync(identityPemEncrypted)) {
 		let res = await prompts({
 			type: 'invisible',
@@ -106,7 +111,10 @@ export function getRootDir() {
 export function checkConfigFile(exit = false) {
 	let configFile = getClosestConfigFile();
 	if (!configFile) {
-		console.log(chalk.red('Error: ') + `Config file 'mops.toml' not found. Please run ${chalk.green('mops init')} first`);
+		console.log(
+			chalk.red('Error: ') +
+				`Config file 'mops.toml' not found. Please run ${chalk.green('mops init')} first`,
+		);
 		if (exit) {
 			process.exit(1);
 		}
@@ -116,7 +124,7 @@ export function checkConfigFile(exit = false) {
 }
 
 export function progressBar(step : number, total : number) {
-	let done = Math.round(step / total * 10);
+	let done = Math.round((step / total) * 10);
 	return `[${':'.repeat(done)}${' '.repeat(Math.max(0, 10 - done))}]`;
 }
 
@@ -125,7 +133,7 @@ export function parseGithubURL(href : string) {
 	let branchAndSha = url.hash?.substring(1).split('@');
 	let branch = branchAndSha[0] || 'master';
 	let commitHash = branchAndSha[1] || '';
-	let [org, gitName] = url.pathname.split('/').filter(path => !!path);
+	let [org, gitName] = url.pathname.split('/').filter((path) => !!path);
 	org = org || '';
 	gitName = gitName || '';
 
@@ -203,21 +211,31 @@ export function readConfig(configFile = getClosestConfigFile()) : Config {
 	return config;
 }
 
-export function writeConfig(config : Config, configFile = getClosestConfigFile()) {
+export function writeConfig(
+	config : Config,
+	configFile = getClosestConfigFile(),
+) {
 	let resConfig : any = JSON.parse(JSON.stringify(config));
 
 	let deps = resConfig.dependencies || {};
-	Object.entries(config.dependencies || {}).forEach(([name, {repo, path, version}]) => {
-		deps[name] = repo || path || version;
-	});
+	Object.entries(config.dependencies || {}).forEach(
+		([name, {repo, path, version}]) => {
+			deps[name] = repo || path || version;
+		},
+	);
 
 	let devDeps = resConfig['dev-dependencies'] || {};
-	Object.entries(config['dev-dependencies'] || {}).forEach(([name, {repo, path, version}]) => {
-		devDeps[name] = repo || path || version;
-	});
+	Object.entries(config['dev-dependencies'] || {}).forEach(
+		([name, {repo, path, version}]) => {
+			devDeps[name] = repo || path || version;
+		},
+	);
 
 	let text = TOML.stringify(resConfig).trim();
-	if (fs.existsSync(configFile) && fs.readFileSync(configFile).toString().endsWith('\n')) {
+	if (
+		fs.existsSync(configFile) &&
+		fs.readFileSync(configFile).toString().endsWith('\n')
+	) {
 		text += '\n';
 	}
 	fs.writeFileSync(configFile, text);
@@ -229,7 +247,12 @@ export function formatDir(name : string, version : string) {
 
 export function formatGithubDir(name : string, repo : string) {
 	const {branch, commitHash} = parseGithubURL(repo);
-	return path.join(getRootDir(), '.mops/_github', `${name}#${branch.replaceAll('/', '___')}` + (commitHash ? `@${commitHash}` : ''));
+	return path.join(
+		getRootDir(),
+		'.mops/_github',
+		`${name}#${branch.replaceAll('/', '___')}` +
+			(commitHash ? `@${commitHash}` : ''),
+	);
 }
 
 export function readDfxJson() : any {
@@ -252,28 +275,37 @@ export async function checkApiCompatibility() {
 	let actor = await mainActor();
 	let backendApiVer = await actor.getApiVersion();
 	if (backendApiVer.split('.')[0] !== apiVersion.split('.')[0]) {
-		console.log(chalk.red('ERR: ') + `CLI incompatible with backend. CLI v${apiVersion}, Backend v${backendApiVer}`);
-		console.log('Run ' + chalk.greenBright('mops self update') + ' to upgrade cli.');
+		console.log(
+			chalk.red('ERR: ') +
+				`CLI incompatible with backend. CLI v${apiVersion}, Backend v${backendApiVer}`,
+		);
+		console.log(
+			'Run ' + chalk.greenBright('mops self update') + ' to upgrade cli.',
+		);
 		return false;
 	}
 	else if (backendApiVer.split('.')[1] !== apiVersion.split('.')[1]) {
 		console.log('-'.repeat(50));
-		console.log(chalk.yellow('WARN: ') + `CLI probably incompatible with backend. CLI v${apiVersion}, Backend v${backendApiVer}`);
-		console.log('Recommended to run ' + chalk.greenBright('mops self update') + ' to upgrade cli.');
+		console.log(
+			chalk.yellow('WARN: ') +
+				`CLI probably incompatible with backend. CLI v${apiVersion}, Backend v${backendApiVer}`,
+		);
+		console.log(
+			'Recommended to run ' +
+				chalk.greenBright('mops self update') +
+				' to upgrade cli.',
+		);
 		console.log('-'.repeat(50));
 	}
 	return true;
 }
 
 export function version() {
-	let packageJson = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url)).toString());
+	let packageJson = JSON.parse(
+		fs.readFileSync(new URL('./package.json', import.meta.url)).toString(),
+	);
 	return packageJson.version;
 }
 
 // compatibility with older versions
-export {
-	getNetwork,
-	mainActor,
-	storageActor,
-	getHighestVersion,
-};
+export {getNetwork, mainActor, storageActor, getHighestVersion};

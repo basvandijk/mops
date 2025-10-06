@@ -16,12 +16,19 @@ export async function outdated() {
 	}
 	else {
 		console.log('Available updates:');
-		let allDeps = [...Object.keys(config.dependencies || {}), ...Object.keys(config['dev-dependencies'] || {})];
+		let allDeps = [
+			...Object.keys(config.dependencies || {}),
+			...Object.keys(config['dev-dependencies'] || {}),
+		];
 		for (let dep of available) {
-			let name = allDeps.find((d) => {
-				let pinnedVersion = getDepPinnedVersion(d);
-				return getDepName(d) === dep[0] && (!pinnedVersion || dep[1].startsWith(pinnedVersion));
-			}) || dep[0];
+			let name =
+				allDeps.find((d) => {
+					let pinnedVersion = getDepPinnedVersion(d);
+					return (
+						getDepName(d) === dep[0] &&
+						(!pinnedVersion || dep[1].startsWith(pinnedVersion))
+					);
+				}) || dep[0];
 
 			console.log(`${name} ${chalk.yellow(dep[1])} -> ${chalk.green(dep[2])}`);
 		}

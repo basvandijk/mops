@@ -27,33 +27,40 @@ export function pipeStderrToMMF(stderr : Readable, mmf : MMF1, dir = '') {
 		let text : string = data.toString().trim();
 		let failedLine = '';
 
-		text = text.replace(/([\w+._/-]+):(\d+).(\d+)(-\d+.\d+)/g, (_m0, m1 : string, m2 : string, m3 : string) => {
-			// change absolute file path to relative
-			// change :line:col-line:col to :line:col to work in vscode
-			let res = `${absToRel(m1)}:${m2}:${m3}`;
-			let file = path.join(dir, m1);
+		text = text.replace(
+			/([\w+._/-]+):(\d+).(\d+)(-\d+.\d+)/g,
+			(_m0, m1 : string, m2 : string, m3 : string) => {
+				// change absolute file path to relative
+				// change :line:col-line:col to :line:col to work in vscode
+				let res = `${absToRel(m1)}:${m2}:${m3}`;
+				let file = path.join(dir, m1);
 
-			if (!fs.existsSync(file)) {
+				if (!fs.existsSync(file)) {
+					return res;
+				}
+
+				// show failed line
+				let content = fs.readFileSync(file);
+				let lines = content.toString().split('\n') || [];
+
+				failedLine += chalk.dim('\n   ...');
+
+				let lineBefore = lines[+m2 - 2];
+				if (lineBefore) {
+					failedLine += chalk.dim(
+						`\n   ${+m2 - 1}\t| ${lineBefore.replaceAll('\t', '  ')}`,
+					);
+				}
+				failedLine += `\n${chalk.redBright`->`} ${m2}\t| ${lines[+m2 - 1]?.replaceAll('\t', '  ')}`;
+				if (lines.length > +m2) {
+					failedLine += chalk.dim(
+						`\n   ${+m2 + 1}\t| ${lines[+m2]?.replaceAll('\t', '  ')}`,
+					);
+				}
+				failedLine += chalk.dim('\n   ...');
 				return res;
-			}
-
-			// show failed line
-			let content = fs.readFileSync(file);
-			let lines = content.toString().split('\n') || [];
-
-			failedLine += chalk.dim('\n   ...');
-
-			let lineBefore = lines[+m2 - 2];
-			if (lineBefore) {
-				failedLine += chalk.dim(`\n   ${+m2 - 1}\t| ${lineBefore.replaceAll('\t', '  ')}`);
-			}
-			failedLine += `\n${chalk.redBright`->`} ${m2}\t| ${lines[+m2 - 1]?.replaceAll('\t', '  ')}`;
-			if (lines.length > +m2) {
-				failedLine += chalk.dim(`\n   ${+m2 + 1}\t| ${lines[+m2]?.replaceAll('\t', '  ')}`);
-			}
-			failedLine += chalk.dim('\n   ...');
-			return res;
-		});
+			},
+		);
 		if (failedLine) {
 			text += failedLine;
 		}
@@ -78,4 +85,3 @@ export function pipeMMF(proc : ChildProcessWithoutNullStreams, mmf : MMF1) {
 		});
 	});
 }
-

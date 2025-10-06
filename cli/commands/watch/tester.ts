@@ -6,14 +6,21 @@ import {SilentReporter} from '../test/reporters/silent-reporter.js';
 
 export class Tester {
 	verbose = false;
-	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' = 'pending';
+	status : 'pending' | 'running' | 'syntax-error' | 'error' | 'success' =
+		'pending';
 	errorChecker : ErrorChecker;
 	reporter = new SilentReporter(false);
 	aborted = false;
 	controller = new AbortController();
 	currentRun : Promise<any> | undefined;
 
-	constructor({verbose, errorChecker} : {verbose : boolean, errorChecker : ErrorChecker}) {
+	constructor({
+		verbose,
+		errorChecker,
+	} : {
+		verbose : boolean;
+		errorChecker : ErrorChecker;
+	}) {
 		this.verbose = verbose;
 		this.errorChecker = errorChecker;
 	}
@@ -47,7 +54,14 @@ export class Tester {
 
 		let config = readConfig();
 
-		this.currentRun = testWithReporter(this.reporter, '', 'interpreter', config.toolchain?.['pocket-ic'] ? 'pocket-ic' : 'dfx', true, this.controller.signal);
+		this.currentRun = testWithReporter(
+			this.reporter,
+			'',
+			'interpreter',
+			config.toolchain?.['pocket-ic'] ? 'pocket-ic' : 'dfx',
+			true,
+			this.controller.signal,
+		);
 		await this.currentRun;
 
 		if (!this.aborted) {
@@ -59,7 +73,11 @@ export class Tester {
 
 	getOutput() : string {
 		let get = (v : number) => v.toString();
-		let count = (this.status === 'running' ? get : chalk.bold[this.reporter.failed > 0 ? 'redBright' : 'green'])(this.reporter.failedFiles || this.reporter.passedFiles);
+		let count = (
+			this.status === 'running'
+				? get
+				: chalk.bold[this.reporter.failed > 0 ? 'redBright' : 'green']
+		)(this.reporter.failedFiles || this.reporter.passedFiles);
 
 		if (this.status === 'pending') {
 			return `Tests: ${chalk.gray('(pending)')}`;

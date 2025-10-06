@@ -31,7 +31,11 @@ function decode(rawKey : Buffer) {
 let algorithm = 'aes-256-ctr';
 
 export function encrypt(buffer : Buffer, password : string) {
-	let key = crypto.createHash('sha256').update(password).digest('base64').slice(0, 32);
+	let key = crypto
+		.createHash('sha256')
+		.update(password)
+		.digest('base64')
+		.slice(0, 32);
 	// Create an initialization vector
 	let iv = crypto.randomBytes(16);
 	// Create a new cipher using the algorithm, key, and iv
@@ -42,7 +46,11 @@ export function encrypt(buffer : Buffer, password : string) {
 }
 
 function decrypt(encrypted : Buffer, password : string) {
-	let key = crypto.createHash('sha256').update(password).digest('base64').slice(0, 32);
+	let key = crypto
+		.createHash('sha256')
+		.update(password)
+		.digest('base64')
+		.slice(0, 32);
 	// Get the iv: the first 16 bytes
 	let iv = encrypted.subarray(0, 16);
 	// Get the rest

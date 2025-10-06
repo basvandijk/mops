@@ -36,12 +36,15 @@ export async function addOwner(owner : string, yes = false) {
 			},
 		};
 
-		let {confirm} = await prompts({
-			type: 'confirm',
-			name: 'confirm',
-			message: `Are you sure you want to add owner ${chalk.yellow(owner)} to ${chalk.yellow(config.package?.name)} package?`,
-			initial: true,
-		}, promptsConfig);
+		let {confirm} = await prompts(
+			{
+				type: 'confirm',
+				name: 'confirm',
+				message: `Are you sure you want to add owner ${chalk.yellow(owner)} to ${chalk.yellow(config.package?.name)} package?`,
+				initial: true,
+			},
+			promptsConfig,
+		);
 
 		if (!confirm) {
 			return;
@@ -54,7 +57,9 @@ export async function addOwner(owner : string, yes = false) {
 	let res = await actor.addOwner(config.package?.name || '', principal);
 	if ('ok' in res) {
 		console.log(chalk.green('Success!'));
-		console.log(`Added owner ${chalk.bold(owner)} to package ${chalk.bold(config.package?.name)}`);
+		console.log(
+			`Added owner ${chalk.bold(owner)} to package ${chalk.bold(config.package?.name)}`,
+		);
 	}
 	else {
 		console.error(chalk.red('Error: ') + res.err);
@@ -78,12 +83,15 @@ export async function removeOwner(owner : string, yes = false) {
 			},
 		};
 
-		let {confirm} = await prompts({
-			type: 'confirm',
-			name: 'confirm',
-			message: `Are you sure you want to remove owner ${chalk.red(owner)} from ${chalk.red(config.package?.name)} package?`,
-			initial: true,
-		}, promptsConfig);
+		let {confirm} = await prompts(
+			{
+				type: 'confirm',
+				name: 'confirm',
+				message: `Are you sure you want to remove owner ${chalk.red(owner)} from ${chalk.red(config.package?.name)} package?`,
+				initial: true,
+			},
+			promptsConfig,
+		);
 
 		if (!confirm) {
 			return;
@@ -96,7 +104,9 @@ export async function removeOwner(owner : string, yes = false) {
 	let res = await actor.removeOwner(config.package?.name || '', principal);
 	if ('ok' in res) {
 		console.log(chalk.green('Success!'));
-		console.log(`Removed owner ${chalk.bold(owner)} from package ${chalk.bold(config.package?.name)}`);
+		console.log(
+			`Removed owner ${chalk.bold(owner)} from package ${chalk.bold(config.package?.name)}`,
+		);
 	}
 	else {
 		console.error(chalk.red('Error: ') + res.err);

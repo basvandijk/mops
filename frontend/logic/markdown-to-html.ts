@@ -3,10 +3,16 @@ import {toHtml} from 'hast-util-to-html';
 
 import {getStarryNight} from './get-starry-night';
 
-export let markdownToHtml = async (markdown : string, repositoryUrl ?: string) => {
+export let markdownToHtml = async (
+	markdown : string,
+	repositoryUrl ?: string,
+) => {
 	// make links to issues and PRs clickable
 	if (repositoryUrl) {
-		markdown = markdown.replace(/\(#(\d+)\)/g, `([#$1](${repositoryUrl}/issues/$1))`);
+		markdown = markdown.replace(
+			/\(#(\d+)\)/g,
+			`([#$1](${repositoryUrl}/issues/$1))`,
+		);
 	}
 
 	let starryNight = await getStarryNight();
@@ -63,9 +69,12 @@ export let markdownToHtml = async (markdown : string, repositoryUrl ?: string) =
 	}
 
 	// add anchors to headings
-	let anchors = new Set;
+	let anchors = new Set();
 	div.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
-		let id = el.textContent.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s/g, '-');
+		let id = el.textContent
+			.toLowerCase()
+			.replace(/[^\w\s]/g, '')
+			.replace(/\s/g, '-');
 		if (anchors.has(id)) {
 			let i = 1;
 			while (anchors.has(id + '-' + i)) {

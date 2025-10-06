@@ -39,20 +39,23 @@ let globConfig = {
 };
 
 type BenchOptions = {
-	replica : ReplicaName,
-	replicaVersion : string,
-	compiler : 'moc',
-	compilerVersion : string,
-	gc : 'copying' | 'compacting' | 'generational' | 'incremental',
-	forceGc : boolean,
-	save : boolean,
-	compare : boolean,
-	verbose : boolean,
-	silent : boolean,
-	profile : 'Debug' | 'Release',
+	replica : ReplicaName;
+	replicaVersion : string;
+	compiler : 'moc';
+	compilerVersion : string;
+	gc : 'copying' | 'compacting' | 'generational' | 'incremental';
+	forceGc : boolean;
+	save : boolean;
+	compare : boolean;
+	verbose : boolean;
+	silent : boolean;
+	profile : 'Debug' | 'Release';
 };
 
-export async function bench(filter = '', optionsArg : Partial<BenchOptions> = {}) : Promise<Benchmarks> {
+export async function bench(
+	filter = '',
+	optionsArg : Partial<BenchOptions> = {},
+) : Promise<Benchmarks> {
 	let config = readConfig();
 	let dfxJson = readDfxJson();
 
@@ -72,11 +75,17 @@ export async function bench(filter = '', optionsArg : Partial<BenchOptions> = {}
 
 	let options : BenchOptions = {...defaultOptions, ...optionsArg};
 
-	let replicaType = options.replica ?? (config.toolchain?.['pocket-ic'] ? 'pocket-ic' : 'dfx' as ReplicaName);
+	let replicaType =
+		options.replica ??
+		(config.toolchain?.['pocket-ic'] ? 'pocket-ic' : ('dfx' as ReplicaName));
 	if (replicaType === 'pocket-ic' && !config.toolchain?.['pocket-ic']) {
 		let dfxVersion = getDfxVersion();
 		if (!dfxVersion || new SemVer(dfxVersion).compare('0.24.1') < 0) {
-			console.log(chalk.red('Please update dfx to the version >=0.24.1 or specify pocket-ic version in mops.toml'));
+			console.log(
+				chalk.red(
+					'Please update dfx to the version >=0.24.1 or specify pocket-ic version in mops.toml',
+				),
+			);
 			process.exit(1);
 		}
 		else {
@@ -109,12 +118,15 @@ export async function bench(filter = '', optionsArg : Partial<BenchOptions> = {}
 	let files = globSync(path.join(rootDir, globStr), globConfig);
 	if (!files.length) {
 		if (filter) {
-			options.silent || console.log(`No benchmark files found for filter '${filter}'`);
+			options.silent ||
+				console.log(`No benchmark files found for filter '${filter}'`);
 			return [];
 		}
 		if (!options.silent) {
 			console.log('No *.bench.mo files found');
-			console.log('Put your benchmark code in \'bench\' directory in *.bench.mo files');
+			console.log(
+				'Put your benchmark code in \'bench\' directory in *.bench.mo files',
+			);
 		}
 		return [];
 	}
@@ -224,7 +236,12 @@ function computeDiffAll(
 	rows : string[],
 	cols : string[],
 ) : number {
-	let metrics : (keyof BenchResult)[] = ['instructions', 'rts_heap_size', 'rts_logical_stable_memory_size', 'rts_reclaimed'];
+	let metrics : (keyof BenchResult)[] = [
+		'instructions',
+		'rts_heap_size',
+		'rts_logical_stable_memory_size',
+		'rts_reclaimed',
+	];
 	let diff = 0;
 
 	for (let metric of metrics) {
@@ -237,7 +254,10 @@ function computeDiffAll(
 function getMocArgs(options : BenchOptions) : string {
 	let args = '';
 
-	if (options.compilerVersion && new SemVer(options.compilerVersion).compare('0.15.0') >= 0) {
+	if (
+		options.compilerVersion &&
+		new SemVer(options.compilerVersion).compare('0.15.0') >= 0
+	) {
 		args += ' --legacy-persistence';
 	}
 
@@ -259,24 +279,43 @@ function getMocArgs(options : BenchOptions) : string {
 	return args;
 }
 
-async function deployBenchFile(file : string, options : BenchOptions, replica : BenchReplica) : Promise<void> {
+async function deployBenchFile(
+	file : string,
+	options : BenchOptions,
+	replica : BenchReplica,
+) : Promise<void> {
 	let rootDir = getRootDir();
 	let tempDir = path.join(rootDir, '.mops/.bench/', path.parse(file).name);
 	let canisterName = path.parse(file).name;
 
 	// prepare temp files
 	fs.mkdirSync(tempDir, {recursive: true});
-	fs.writeFileSync(path.join(tempDir, 'dfx.json'), JSON.stringify(replica.dfxJson(canisterName), null, 2));
+	fs.writeFileSync(
+		path.join(tempDir, 'dfx.json'),
+		JSON.stringify(replica.dfxJson(canisterName), null, 2),
+	);
 
-	let benchCanisterData = fs.readFileSync(new URL('./bench/bench-canister.mo', import.meta.url), 'utf8');
-	benchCanisterData = benchCanisterData.replace('./user-bench', path.relative(tempDir, file).replace(/.mo$/g, ''));
+	let benchCanisterData = fs.readFileSync(
+		new URL('./bench/bench-canister.mo', import.meta.url),
+		'utf8',
+	);
+	benchCanisterData = benchCanisterData.replace(
+		'./user-bench',
+		path.relative(tempDir, file).replace(/.mo$/g, ''),
+	);
 	fs.writeFileSync(path.join(tempDir, 'canister.mo'), benchCanisterData);
 
 	// build canister
 	let mocPath = getMocPath();
 	let mocArgs = getMocArgs(options);
 	options.verbose && console.time(`build ${canisterName}`);
-	await execaCommand(`${mocPath} -c --idl canister.mo ${mocArgs} ${(await sources({cwd: tempDir})).join(' ')}`, {cwd: tempDir, stdio: options.verbose ? 'pipe' : ['pipe', 'ignore', 'pipe']});
+	await execaCommand(
+		`${mocPath} -c --idl canister.mo ${mocArgs} ${(await sources({cwd: tempDir})).join(' ')}`,
+		{
+			cwd: tempDir,
+			stdio: options.verbose ? 'pipe' : ['pipe', 'ignore', 'pipe'],
+		},
+	);
 	options.verbose && console.timeEnd(`build ${canisterName}`);
 
 	// deploy canister
@@ -288,37 +327,61 @@ async function deployBenchFile(file : string, options : BenchOptions, replica : 
 
 	// init bench
 	options.verbose && console.time(`init ${canisterName}`);
-	let actor = await replica.getActor(canisterName) as _SERVICE;
+	let actor = (await replica.getActor(canisterName)) as _SERVICE;
 	await actor.init();
 	options.verbose && console.timeEnd(`init ${canisterName}`);
 }
 
-async function runBenchFile(file : string, options : BenchOptions, replica : BenchReplica) : Promise<Benchmark> {
+async function runBenchFile(
+	file : string,
+	options : BenchOptions,
+	replica : BenchReplica,
+) : Promise<Benchmark> {
 	let rootDir = getRootDir();
 	let canisterName = path.parse(file).name;
 
-	let actor = await replica.getActor(canisterName) as _SERVICE;
+	let actor = (await replica.getActor(canisterName)) as _SERVICE;
 	let schema = await actor.getSchema();
 
 	// load previous results
 	let prevResults : Map<string, BenchResult> | undefined;
-	let resultsJsonFile = path.join(rootDir, '.bench', `${path.parse(file).name}.json`);
+	let resultsJsonFile = path.join(
+		rootDir,
+		'.bench',
+		`${path.parse(file).name}.json`,
+	);
 	if (options.compare) {
 		if (fs.existsSync(resultsJsonFile)) {
-			let prevResultsJson = JSON.parse(fs.readFileSync(resultsJsonFile).toString());
+			let prevResultsJson = JSON.parse(
+				fs.readFileSync(resultsJsonFile).toString(),
+			);
 			prevResults = new Map(prevResultsJson.results);
 		}
 		else {
-			console.log(chalk.yellow(`No previous results found "${resultsJsonFile}"`));
+			console.log(
+				chalk.yellow(`No previous results found "${resultsJsonFile}"`),
+			);
 		}
 	}
 
 	let results = new Map<string, BenchResult>();
 
-	let instructionsCells : bigint[][] = Array.from({length: schema.rows.length}, () => []);
-	let heapCells : bigint[][] = Array.from({length: schema.rows.length}, () => []);
-	let logicalStableMemoryCells : bigint[][] = Array.from({length: schema.rows.length}, () => []);
-	let reclaimedCells : bigint[][] = Array.from({length: schema.rows.length}, () => []);
+	let instructionsCells : bigint[][] = Array.from(
+		{length: schema.rows.length},
+		() => [],
+	);
+	let heapCells : bigint[][] = Array.from(
+		{length: schema.rows.length},
+		() => [],
+	);
+	let logicalStableMemoryCells : bigint[][] = Array.from(
+		{length: schema.rows.length},
+		() => [],
+	);
+	let reclaimedCells : bigint[][] = Array.from(
+		{length: schema.rows.length},
+		() => [],
+	);
 
 	let formatNumber = (n : bigint | number) : string => {
 		return n.toLocaleString('en-US').replaceAll(',', '_');
@@ -331,7 +394,8 @@ async function runBenchFile(file : string, options : BenchOptions, replica : Ben
 	let colorizePercent = (percent : number, wrapInParens = false) : string => {
 		let sign = percent > 0 ? '+' : '';
 		let percentText = percent == 0 ? '0%' : sign + percent.toFixed(2) + '%';
-		let color : keyof typeof chalk = percent == 0 ? 'gray' : (percent > 0 ? 'red' : 'green');
+		let color : keyof typeof chalk =
+			percent == 0 ? 'gray' : percent > 0 ? 'red' : 'green';
 		let parens = wrapInParens ? ['(', ')'] : ['', ''];
 		if (process.env.CI) {
 			return `$${parens[0]}{\\color{${color}}${percentText.replace('%', '\\\\%')}}${parens[1]}$`;
@@ -360,7 +424,10 @@ async function runBenchFile(file : string, options : BenchOptions, replica : Ben
 					if (options.compare && prevResults) {
 						let prevRes = prevResults.get(`${row}:${col}`);
 						if (prevRes) {
-							let percent = (Number(res[prop]) - Number(prevRes[prop])) / Number(prevRes[prop]) * 100;
+							let percent =
+								((Number(res[prop]) - Number(prevRes[prop])) /
+									Number(prevRes[prop])) *
+								100;
 							if (Object.is(percent, NaN)) {
 								percent = 0;
 							}
@@ -434,7 +501,10 @@ async function runBenchFile(file : string, options : BenchOptions, replica : Ben
 		}
 	};
 
-	let canUpdateLog = !process.env.CI && !options.silent && terminalSize().rows > getOutput().split('\n').length;
+	let canUpdateLog =
+		!process.env.CI &&
+		!options.silent &&
+		terminalSize().rows > getOutput().split('\n').length;
 
 	let log = () => {
 		if (options.silent) {
@@ -456,7 +526,10 @@ async function runBenchFile(file : string, options : BenchOptions, replica : Ben
 	// run all cells
 	for (let [rowIndex, row] of schema.rows.entries()) {
 		for (let [colIndex, col] of schema.cols.entries()) {
-			let res = await actor.runCellUpdateAwait(BigInt(rowIndex), BigInt(colIndex));
+			let res = await actor.runCellUpdateAwait(
+				BigInt(rowIndex),
+				BigInt(colIndex),
+			);
 			results.set(`${row}:${col}`, res);
 
 			// @ts-ignore
@@ -464,7 +537,8 @@ async function runBenchFile(file : string, options : BenchOptions, replica : Ben
 			// @ts-ignore
 			heapCells[rowIndex][colIndex] = res.rts_heap_size;
 			// @ts-ignore
-			logicalStableMemoryCells[rowIndex][colIndex] = res.rts_logical_stable_memory_size;
+			logicalStableMemoryCells[rowIndex][colIndex] =
+				res.rts_logical_stable_memory_size;
 			// @ts-ignore
 			reclaimedCells[rowIndex][colIndex] = res.rts_reclaimed;
 
@@ -494,14 +568,21 @@ async function runBenchFile(file : string, options : BenchOptions, replica : Ben
 			results: Array.from(results.entries()),
 		};
 		fs.mkdirSync(path.dirname(resultsJsonFile), {recursive: true});
-		fs.writeFileSync(resultsJsonFile, JSON.stringify(json, (_, val) => {
-			if (typeof val === 'bigint') {
-				return Number(val);
-			}
-			else {
-				return val;
-			}
-		}, 2));
+		fs.writeFileSync(
+			resultsJsonFile,
+			JSON.stringify(
+				json,
+				(_, val) => {
+					if (typeof val === 'bigint') {
+						return Number(val);
+					}
+					else {
+						return val;
+					}
+				},
+				2,
+			),
+		);
 	}
 
 	// for backend

@@ -1,5 +1,10 @@
 import chalk from 'chalk';
-import {checkConfigFile, getGithubCommit, parseGithubURL, readConfig} from '../mops.js';
+import {
+	checkConfigFile,
+	getGithubCommit,
+	parseGithubURL,
+	readConfig,
+} from '../mops.js';
 import {add} from './add.js';
 import {getAvailableUpdates} from './available-updates.js';
 import {checkIntegrity} from '../integrity.js';
@@ -17,7 +22,11 @@ export async function update(pkg ?: string, {lock} : UpdateOptions = {}) {
 	}
 	let config = readConfig();
 
-	if (pkg && !config.dependencies?.[pkg] && !config['dev-dependencies']?.[pkg]) {
+	if (
+		pkg &&
+		!config.dependencies?.[pkg] &&
+		!config['dev-dependencies']?.[pkg]
+	) {
 		console.log(chalk.red(`Package "${pkg}" is not installed!`));
 		return;
 	}
@@ -35,7 +44,11 @@ export async function update(pkg ?: string, {lock} : UpdateOptions = {}) {
 		let dev = !!config['dev-dependencies']?.[dep.name];
 		let commit = await getGithubCommit(`${org}/${gitName}`, branch);
 		if (commit.sha !== commitHash) {
-			await add(`https://github.com/${org}/${gitName}#${branch}@${commit.sha}`, {dev}, dep.name);
+			await add(
+				`https://github.com/${org}/${gitName}#${branch}@${commit.sha}`,
+				{dev},
+				dep.name,
+			);
 		}
 	}
 
@@ -58,16 +71,23 @@ export async function update(pkg ?: string, {lock} : UpdateOptions = {}) {
 			let dev = false;
 			for (let d of devDeps) {
 				let pinnedVersion = getDepPinnedVersion(d);
-				if (getDepName(d) === dep[0] && (!pinnedVersion || dep[1].startsWith(pinnedVersion))) {
+				if (
+					getDepName(d) === dep[0] &&
+					(!pinnedVersion || dep[1].startsWith(pinnedVersion))
+				) {
 					dev = true;
 					break;
 				}
 			}
 
-			let asName = allDeps.find((d) => {
-				let pinnedVersion = getDepPinnedVersion(d);
-				return getDepName(d) === dep[0] && (!pinnedVersion || dep[1].startsWith(pinnedVersion));
-			}) || dep[0];
+			let asName =
+				allDeps.find((d) => {
+					let pinnedVersion = getDepPinnedVersion(d);
+					return (
+						getDepName(d) === dep[0] &&
+						(!pinnedVersion || dep[1].startsWith(pinnedVersion))
+					);
+				}) || dep[0];
 
 			await add(`${dep[0]}@${dep[2]}`, {dev}, asName);
 		}

@@ -4,7 +4,10 @@ import debounce from 'debounce';
 import chalk from 'chalk';
 import {ErrorChecker} from './error-checker.js';
 import {WarningChecker} from './warning-checker.js';
-import {getMotokoCanisters, getMotokoCanistersWithDeclarations} from './parseDfxJson.js';
+import {
+	getMotokoCanisters,
+	getMotokoCanistersWithDeclarations,
+} from './parseDfxJson.js';
 import {getRootDir} from '../../mops.js';
 import {Tester} from './tester.js';
 import {Generator} from './generator.js';
@@ -18,7 +21,14 @@ let ignore = [
 	'**/.git/**',
 ];
 
-export async function watch(options : {error : boolean, warning : boolean, test : boolean, generate : boolean, deploy : boolean, format : boolean}) {
+export async function watch(options : {
+	error : boolean;
+	warning : boolean;
+	test : boolean;
+	generate : boolean;
+	deploy : boolean;
+	format : boolean;
+}) {
 	let hasOptions = Object.values(options).includes(true);
 	if (!hasOptions) {
 		options = {
@@ -36,19 +46,32 @@ export async function watch(options : {error : boolean, warning : boolean, test 
 	let canisters = getMotokoCanisters();
 	let canistersWithDeclarations = getMotokoCanistersWithDeclarations();
 	let errorChecker = new ErrorChecker({verbose: true, canisters: canisters});
-	let warningChecker = new WarningChecker({errorChecker, verbose: true, canisters: canisters});
+	let warningChecker = new WarningChecker({
+		errorChecker,
+		verbose: true,
+		canisters: canisters,
+	});
 	let tester = new Tester({errorChecker, verbose: true});
-	let generator = new Generator({errorChecker, verbose: true, canisters: canistersWithDeclarations});
-	let deployer = new Deployer({errorChecker, generator, verbose: true, canisters: canisters});
+	let generator = new Generator({
+		errorChecker,
+		verbose: true,
+		canisters: canistersWithDeclarations,
+	});
+	let deployer = new Deployer({
+		errorChecker,
+		generator,
+		verbose: true,
+		canisters: canisters,
+	});
 	let formatter = new Formatter({errorChecker, verbose: true});
 
-	let watcher = chokidar.watch([
-		path.join(rootDir, '**/*.mo'),
-		path.join(rootDir, 'mops.toml'),
-	], {
-		ignored: ignore,
-		ignoreInitial: true,
-	});
+	let watcher = chokidar.watch(
+		[path.join(rootDir, '**/*.mo'), path.join(rootDir, 'mops.toml')],
+		{
+			ignored: ignore,
+			ignoreInitial: true,
+		},
+	);
 
 	let formatting = false;
 
@@ -68,11 +91,14 @@ export async function watch(options : {error : boolean, warning : boolean, test 
 			formatting = true;
 		}
 
-		options.error && await errorChecker.run(print);
+		options.error && (await errorChecker.run(print));
 		options.warning && warningChecker.run(print);
-		options.format && formatter.run(print).then(() => setTimeout(() => formatting = false, 500));
+		options.format &&
+			formatter
+				.run(print)
+				.then(() => setTimeout(() => (formatting = false), 500));
 		options.test && tester.run(print);
-		options.generate && await generator.run(print);
+		options.generate && (await generator.run(print));
 		options.deploy && deployer.run(print);
 	}, 200);
 
@@ -95,7 +121,9 @@ export async function watch(options : {error : boolean, warning : boolean, test 
 		options.generate && statuses.push(generator.status);
 		options.deploy && statuses.push(deployer.status);
 
-		if (statuses.every(status => status !== 'pending' && status !== 'running')) {
+		if (
+			statuses.every((status) => status !== 'pending' && status !== 'running')
+		) {
 			console.log(chalk.dim('-'.repeat(50)));
 			console.log(chalk.dim('Waiting for file changes...'));
 			console.log(chalk.dim(`Press ${chalk.bold('Ctrl+C')} to exit.`));

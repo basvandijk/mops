@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import {deleteSync} from 'del';
 import chalk from 'chalk';
-import {checkConfigFile, getRootDir, readConfig, writeConfig} from '../mops.js';
+import {
+	checkConfigFile,
+	getRootDir,
+	readConfig,
+	writeConfig,
+} from '../mops.js';
 import {Config, Dependency} from '../types.js';
 import {checkIntegrity} from '../integrity.js';
 import {getDepCacheDir, getDepCacheName} from '../cache.js';
@@ -16,7 +21,10 @@ type RemoveOptions = {
 	lock ?: 'update' | 'ignore';
 };
 
-export async function remove(name : string, {dev = false, verbose = false, dryRun = false, lock} : RemoveOptions = {}) {
+export async function remove(
+	name : string,
+	{dev = false, verbose = false, dryRun = false, lock} : RemoveOptions = {},
+) {
 	if (!checkConfigFile()) {
 		return;
 	}
@@ -28,12 +36,21 @@ export async function remove(name : string, {dev = false, verbose = false, dryRu
 			.filter((dep) => {
 				let depId = getPackageId(dep.name, dep.version || '');
 				return depId !== exceptPkgId;
-			}).map((dep) => {
-				return [dep, ...getTransitiveDependenciesOf(dep.name, dep.version, dep.repo)];
-			}).flat();
+			})
+			.map((dep) => {
+				return [
+					dep,
+					...getTransitiveDependenciesOf(dep.name, dep.version, dep.repo),
+				];
+			})
+			.flat();
 	}
 
-	function getTransitiveDependenciesOf(name : string, version : string | undefined, repo ?: string) {
+	function getTransitiveDependenciesOf(
+		name : string,
+		version : string | undefined,
+		repo ?: string,
+	) {
 		let value = version || repo;
 		if (!value) {
 			return [];
@@ -46,9 +63,11 @@ export async function remove(name : string, {dev = false, verbose = false, dryRu
 			return [];
 		}
 		let config = readConfig(configFile);
-		let deps : Dependency[] = Object.values(config.dependencies || {}).map((dep) => {
-			return [dep, ...getTransitiveDependenciesOf(dep.name, dep.version)];
-		}).flat();
+		let deps : Dependency[] = Object.values(config.dependencies || {})
+			.map((dep) => {
+				return [dep, ...getTransitiveDependenciesOf(dep.name, dep.version)];
+			})
+			.flat();
 		return deps;
 	}
 
@@ -58,7 +77,10 @@ export async function remove(name : string, {dev = false, verbose = false, dryRu
 	let pkgDetails = deps[name];
 
 	if (!pkgDetails) {
-		return console.log(chalk.red('Error: ') + `No ${dev ? 'dev ' : ''}dependency to remove "${name}"`);
+		return console.log(
+			chalk.red('Error: ') +
+				`No ${dev ? 'dev ' : ''}dependency to remove "${name}"`,
+		);
 	}
 
 	let version = pkgDetails.version;
@@ -66,18 +88,26 @@ export async function remove(name : string, {dev = false, verbose = false, dryRu
 
 	// transitive deps ignoring deps of this package
 	let transitiveDeps = getTransitiveDependencies(config, packageId);
-	let transitiveDepIds = new Set(transitiveDeps.map((dep) => {
-		return getPackageId(dep.name, dep.version || '');
-	}));
+	let transitiveDepIds = new Set(
+		transitiveDeps.map((dep) => {
+			return getPackageId(dep.name, dep.version || '');
+		}),
+	);
 
 	// transitive deps of this package (including itself)
-	let transitiveDepsOfPackage = [pkgDetails, ...getTransitiveDependenciesOf(name, version)];
+	let transitiveDepsOfPackage = [
+		pkgDetails,
+		...getTransitiveDependenciesOf(name, version),
+	];
 
 	// remove local cache
 	for (let dep of transitiveDepsOfPackage) {
 		let depId = getPackageId(dep.name, dep.version || '');
 		if (transitiveDepIds.has(depId)) {
-			verbose && console.log(`Ignored transitive dependency ${depId} (other deps depend on it)`);
+			verbose &&
+				console.log(
+					`Ignored transitive dependency ${depId} (other deps depend on it)`,
+				);
 			continue;
 		}
 		let cacheName = getDepCacheName(dep.name, dep.version || dep.repo || '');

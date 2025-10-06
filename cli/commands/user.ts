@@ -40,7 +40,12 @@ export async function getPrincipal() {
 		console.log(identity.getPrincipal().toText());
 	}
 	else {
-		console.log(chalk.red('Error: ') + 'identity not found. Run ' + chalk.greenBright('mops user import') + ' command.');
+		console.log(
+			chalk.red('Error: ') +
+				'identity not found. Run ' +
+				chalk.greenBright('mops user import') +
+				' command.',
+		);
 	}
 }
 
@@ -48,7 +53,10 @@ type ImportIdentityOptions = {
 	encrypt : boolean;
 };
 
-export async function importPem(data : string, options : ImportIdentityOptions = {encrypt: true}) {
+export async function importPem(
+	data : string,
+	options : ImportIdentityOptions = {encrypt: true},
+) {
 	try {
 		if (!fs.existsSync(globalConfigDir)) {
 			fs.mkdirSync(globalConfigDir);
@@ -68,7 +76,8 @@ export async function importPem(data : string, options : ImportIdentityOptions =
 				let res = await prompts({
 					type: 'confirm',
 					name: 'ok',
-					message: 'Are you sure you don\'t want to protect your identity.pem with a password?',
+					message:
+						'Are you sure you don\'t want to protect your identity.pem with a password?',
 				});
 				if (!res.ok) {
 					console.log('aborted');
@@ -78,7 +87,10 @@ export async function importPem(data : string, options : ImportIdentityOptions =
 		}
 
 		let identityPem = path.resolve(globalConfigDir, 'identity.pem');
-		let identityPemEncrypted = path.resolve(globalConfigDir, 'identity.pem.encrypted');
+		let identityPemEncrypted = path.resolve(
+			globalConfigDir,
+			'identity.pem.encrypted',
+		);
 
 		deleteSync([identityPem, identityPemEncrypted], {force: true});
 

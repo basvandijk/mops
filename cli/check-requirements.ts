@@ -25,7 +25,9 @@ export async function checkRequirements({verbose = false} = {}) {
 	for (let [name, version] of Object.entries(resolvedPackages)) {
 		if (getDependencyType(version) === 'mops') {
 			let pkgId = getPackageId(name, version);
-			let depConfig = readConfig(path.join(rootDir, '.mops', pkgId, 'mops.toml'));
+			let depConfig = readConfig(
+				path.join(rootDir, '.mops', pkgId, 'mops.toml'),
+			);
 			let moc = depConfig.requirements?.moc;
 
 			if (moc) {
@@ -45,7 +47,9 @@ export async function checkRequirements({verbose = false} = {}) {
 function _check(pkgId : string, installedMoc : SemVer, requiredMoc : SemVer) {
 	let comp = installedMoc.compare(requiredMoc);
 	if (comp < 0) {
-		console.log(chalk.yellow(`moc version does not meet the requirements of ${pkgId}`));
+		console.log(
+			chalk.yellow(`moc version does not meet the requirements of ${pkgId}`),
+		);
 		console.log(chalk.yellow(`  Required: >= ${requiredMoc.format()}`));
 		console.log(chalk.yellow(`  Installed:   ${installedMoc.format()}`));
 	}

@@ -22,7 +22,10 @@ export let isCached = (version : string) => {
 	return fs.existsSync(dir) && fs.existsSync(path.join(dir, 'pocket-ic'));
 };
 
-export let download = async (version : string, {silent = false, verbose = false} = {}) => {
+export let download = async (
+	version : string,
+	{silent = false, verbose = false} = {},
+) => {
 	if (!version) {
 		console.error('version is not defined');
 		process.exit(1);
@@ -42,5 +45,9 @@ export let download = async (version : string, {silent = false, verbose = false}
 		console.log(`Downloading ${url}`);
 	}
 
-	await toolchainUtils.downloadAndExtract(url, path.join(cacheDir, version), 'pocket-ic');
+	await toolchainUtils.downloadAndExtract(
+		url,
+		path.join(cacheDir, version),
+		'pocket-ic',
+	);
 };

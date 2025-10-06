@@ -6,7 +6,14 @@ import {execSync} from 'node:child_process';
 import chalk from 'chalk';
 import prompts from 'prompts';
 import {createLogUpdate} from 'log-update';
-import {checkConfigFile, getClosestConfigFile, getRootDir, globalCacheDir, readConfig, writeConfig} from '../../mops.js';
+import {
+	checkConfigFile,
+	getClosestConfigFile,
+	getRootDir,
+	globalCacheDir,
+	readConfig,
+	writeConfig,
+} from '../../mops.js';
 import {Tool} from '../../types.js';
 import {checkRequirements} from '../../check-requirements.js';
 import * as moc from './moc.js';
@@ -39,7 +46,11 @@ async function ensureToolchainInited({strict = true} = {}) {
 	// for non-stict perform check only if dfx.json exists and moc is listed in [toolchain] section
 	let rootDir = getRootDir();
 	let config = readConfig();
-	if (!strict && (!config.toolchain?.moc || rootDir && !fs.existsSync(path.join(rootDir, 'dfx.json')))) {
+	if (
+		!strict &&
+		(!config.toolchain?.moc ||
+			(rootDir && !fs.existsSync(path.join(rootDir, 'dfx.json'))))
+	) {
 		return true;
 	}
 
@@ -50,7 +61,9 @@ async function ensureToolchainInited({strict = true} = {}) {
 		}
 	}
 	catch {}
-	console.error('Toolchain management is not initialized. Run "mops toolchain init"');
+	console.error(
+		'Toolchain management is not initialized. Run "mops toolchain init"',
+	);
 	process.exit(1);
 }
 
@@ -64,11 +77,15 @@ async function init({reset = false, silent = false} = {}) {
 	try {
 		let res = execSync('which mocv').toString().trim();
 		if (res) {
-			console.error('Mops is not compatible with mocv. Please uninstall mocv and try again.');
+			console.error(
+				'Mops is not compatible with mocv. Please uninstall mocv and try again.',
+			);
 			console.log('Steps to uninstall mocv:');
 			console.log('1. Run "mocv reset"');
 			console.log('2. Run "npm uninstall -g mocv"');
-			console.log('TIP: Alternative to "mocv use <version>" is "mops toolchain use moc <version>" (installs moc only for current project)');
+			console.log(
+				'TIP: Alternative to "mocv use <version>" is "mops toolchain use moc <version>" (installs moc only for current project)',
+			);
 			console.log('TIP: More details at https://docs.mops.one/cli/toolchain');
 			if (!process.env.CI || !silent) {
 				process.exit(1);
@@ -82,13 +99,25 @@ async function init({reset = false, silent = false} = {}) {
 	let bashProfile = path.join(os.homedir(), '.bash_profile');
 	let zprofile = path.join(os.homedir(), '.zprofile');
 
-	let shellConfigFiles = [bashrc, zshrc, bashProfile, zprofile, process.env.GITHUB_ENV || ''].map(x => x).filter((file) => {
-		return fs.existsSync(file);
-	});
+	let shellConfigFiles = [
+		bashrc,
+		zshrc,
+		bashProfile,
+		zprofile,
+		process.env.GITHUB_ENV || '',
+	]
+		.map((x) => x)
+		.filter((file) => {
+			return fs.existsSync(file);
+		});
 
 	if (shellConfigFiles.length === 0) {
-		console.error('Shell config files not found: .bashrc, .zshrc, .bash_profile, .zprofile');
-		console.log('TIP: You can add "export DFX_MOC_PATH=moc-wrapper" to your shell config file manually to initialize Mops toolchain');
+		console.error(
+			'Shell config files not found: .bashrc, .zshrc, .bash_profile, .zprofile',
+		);
+		console.log(
+			'TIP: You can add "export DFX_MOC_PATH=moc-wrapper" to your shell config file manually to initialize Mops toolchain',
+		);
 		process.exit(1);
 	}
 
@@ -97,9 +126,7 @@ async function init({reset = false, silent = false} = {}) {
 		let text = fs.readFileSync(shellConfigFile).toString();
 		let setDfxMocPathLine = '\nexport DFX_MOC_PATH=moc-wrapper';
 
-		let newLines = [
-			setDfxMocPathLine,
-		];
+		let newLines = [setDfxMocPathLine];
 
 		let oldLines = [
 			// legacy mocv lines
@@ -141,7 +168,11 @@ async function init({reset = false, silent = false} = {}) {
 	}
 }
 
-async function download(tool : Tool, version : string, {silent = false, verbose = false} = {}) {
+async function download(
+	tool : Tool,
+	version : string,
+	{silent = false, verbose = false} = {},
+) {
 	let toolUtils = getToolUtils(tool);
 	let logUpdate = createLogUpdate(process.stdout, {showCursor: true});
 
@@ -187,7 +218,10 @@ async function installAll({silent = false, verbose = false} = {}) {
 		await download('wasmtime', config.toolchain.wasmtime, {silent, verbose});
 	}
 	if (config.toolchain?.['pocket-ic']) {
-		await download('pocket-ic', config.toolchain['pocket-ic'], {silent, verbose});
+		await download('pocket-ic', config.toolchain['pocket-ic'], {
+			silent,
+			verbose,
+		});
 	}
 
 	if (!silent) {
@@ -203,20 +237,32 @@ async function promptVersion(tool : Tool) : Promise<string> {
 
 	let toolUtils = getToolUtils(tool);
 	let releases = await toolUtils.getReleases();
-	let versions = releases.map((item : {tag_name : any;}) => item.tag_name);
+	let versions = releases.map((item : { tag_name : any }) => item.tag_name);
 	let currentIndex = versions.indexOf(current);
 
 	let res = await prompts({
 		type: 'select',
 		name: 'version',
 		message: `Select ${tool} version`,
-		choices: releases.map((release : {published_at : string | number | Date; tag_name : string;}, i : any) => {
-			let date = new Date(release.published_at).toLocaleDateString(undefined, {year: 'numeric', month: 'short', day: 'numeric'});
-			return {
-				title: release.tag_name + chalk.gray(`  ${date}${currentIndex === i ? chalk.italic(' (current)') : ''}`),
-				value: release.tag_name,
-			};
-		}),
+		choices: releases.map(
+			(
+				release : { published_at : string | number | Date; tag_name : string },
+				i : any,
+			) => {
+				let date = new Date(release.published_at).toLocaleDateString(
+					undefined,
+					{year: 'numeric', month: 'short', day: 'numeric'},
+				);
+				return {
+					title:
+						release.tag_name +
+						chalk.gray(
+							`  ${date}${currentIndex === i ? chalk.italic(' (current)') : ''}`,
+						),
+					value: release.tag_name,
+				};
+			},
+		),
 		initial: currentIndex == -1 ? 0 : currentIndex,
 	});
 
@@ -251,7 +297,7 @@ async function use(tool : Tool, version ?: string) {
 	await checkRequirements();
 
 	if (oldVersion === version) {
-		console.log((`${tool} ${version} is already installed`));
+		console.log(`${tool} ${version} is already installed`);
 	}
 	else {
 		console.log(chalk.green(`Installed ${tool} ${version}`));
@@ -267,11 +313,13 @@ async function update(tool ?: Tool) {
 	let config = readConfig();
 	config.toolchain = config.toolchain || {};
 
-	let tools = tool ? [tool] : Object.keys(config.toolchain) as Tool[];
+	let tools = tool ? [tool] : (Object.keys(config.toolchain) as Tool[]);
 
 	for (let tool of tools) {
 		if (!config.toolchain[tool]) {
-			console.error(`Tool '${tool}' is not defined in [toolchain] section in mops.toml`);
+			console.error(
+				`Tool '${tool}' is not defined in [toolchain] section in mops.toml`,
+			);
 			process.exit(1);
 		}
 
@@ -289,7 +337,7 @@ async function update(tool ?: Tool) {
 		}
 
 		if (oldVersion === version) {
-			console.log((`Latest ${tool} ${version} is already installed`));
+			console.log(`Latest ${tool} ${version} is already installed`);
 		}
 		else {
 			console.log(chalk.green(`Installed ${tool} ${version}`));
@@ -332,8 +380,12 @@ async function bin(tool : Tool, {fallback = false} = {}) : Promise<string> {
 		if (tool === 'moc' && fallback) {
 			return execSync('dfx cache show').toString().trim() + '/moc';
 		}
-		console.error(`Tool '${tool}' is not defined in [toolchain] section in mops.toml`);
-		console.log(`Run ${chalk.green(`mops toolchain use ${tool}`)} to install it`);
+		console.error(
+			`Tool '${tool}' is not defined in [toolchain] section in mops.toml`,
+		);
+		console.log(
+			`Run ${chalk.green(`mops toolchain use ${tool}`)} to install it`,
+		);
 		process.exit(1);
 	}
 }

@@ -6,17 +6,23 @@ import {viteStaticCopy} from 'vite-plugin-static-copy';
 import dfxJson from '../dfx.json';
 
 type Network = 'ic' | 'local' | 'staging';
-let network = process.env['DFX_NETWORK'] as Network || 'local';
+let network = (process.env['DFX_NETWORK'] as Network) || 'local';
 
 interface CanisterIds {
 	/* eslint-disable-next-line no-unused-vars */
-	[key : string] : {[key in Network] : string}
+	[key : string] : { [key in Network] : string };
 }
 
 let canisterIds : CanisterIds;
 try {
 	canisterIds = JSON.parse(
-		fs.readFileSync(network === 'local' ? '../.dfx/local/canister_ids.json' : '../canister_ids.json').toString(),
+		fs
+			.readFileSync(
+				network === 'local'
+					? '../.dfx/local/canister_ids.json'
+					: '../canister_ids.json',
+			)
+			.toString(),
 	);
 }
 catch (e) {
@@ -25,11 +31,16 @@ catch (e) {
 
 // Generate canister ids, required by the generated canister code in .dfx/local/declarations/*
 // This strange way of JSON.stringifying the value is required by vite
-const canisterDefinitions = Object.entries(canisterIds).reduce((acc, [key, val]) => ({
-	...acc,
-	[`process.env.${key.toUpperCase().replace(/-/g, '_')}_CANISTER_ID`]: JSON.stringify(val[network as Network]),
-	[`process.env.CANISTER_ID_${key.toUpperCase().replace(/-/g, '_')}`]: JSON.stringify(val[network as Network]),
-}), {});
+const canisterDefinitions = Object.entries(canisterIds).reduce(
+	(acc, [key, val]) => ({
+		...acc,
+		[`process.env.${key.toUpperCase().replace(/-/g, '_')}_CANISTER_ID`]:
+			JSON.stringify(val[network as Network]),
+		[`process.env.CANISTER_ID_${key.toUpperCase().replace(/-/g, '_')}`]:
+			JSON.stringify(val[network as Network]),
+	}),
+	{},
+);
 
 // List of all aliases for canisters
 // This will allow us to: import {canisterName} from "canisters/canisterName"
@@ -38,7 +49,13 @@ const aliases = Object.entries(dfxJson.canisters).reduce(
 	(acc, [name, _value]) => {
 		// Get the network name, or `local` by default.
 		const networkName = network || 'local';
-		const outputRoot = path.join(__dirname, '.dfx', networkName, 'canisters', name);
+		const outputRoot = path.join(
+			__dirname,
+			'.dfx',
+			networkName,
+			'canisters',
+			name,
+		);
 
 		return {
 			...acc,

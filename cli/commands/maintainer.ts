@@ -13,7 +13,9 @@ export async function printMaintainers() {
 	let config = readConfig();
 	let actor = await mainActor();
 
-	let maintainers = await actor.getPackageMaintainers(config.package?.name || '');
+	let maintainers = await actor.getPackageMaintainers(
+		config.package?.name || '',
+	);
 	console.log(`Maintainers of package ${chalk.bold(config.package?.name)}:`);
 	for (let maintainer of maintainers) {
 		console.log(maintainer.toText());
@@ -36,12 +38,15 @@ export async function addMaintainer(maintainer : string, yes = false) {
 			},
 		};
 
-		let {confirm} = await prompts({
-			type: 'confirm',
-			name: 'confirm',
-			message: `Are you sure you want to add maintainer ${chalk.yellow(maintainer)} to ${chalk.yellow(config.package?.name)} package?`,
-			initial: true,
-		}, promptsConfig);
+		let {confirm} = await prompts(
+			{
+				type: 'confirm',
+				name: 'confirm',
+				message: `Are you sure you want to add maintainer ${chalk.yellow(maintainer)} to ${chalk.yellow(config.package?.name)} package?`,
+				initial: true,
+			},
+			promptsConfig,
+		);
 
 		if (!confirm) {
 			return;
@@ -54,7 +59,9 @@ export async function addMaintainer(maintainer : string, yes = false) {
 	let res = await actor.addMaintainer(config.package?.name || '', principal);
 	if ('ok' in res) {
 		console.log(chalk.green('Success!'));
-		console.log(`Added maintainer ${chalk.bold(maintainer)} to package ${chalk.bold(config.package?.name)}`);
+		console.log(
+			`Added maintainer ${chalk.bold(maintainer)} to package ${chalk.bold(config.package?.name)}`,
+		);
 	}
 	else {
 		console.error(chalk.red('Error: ') + res.err);
@@ -78,12 +85,15 @@ export async function removeMaintainer(maintainer : string, yes = false) {
 			},
 		};
 
-		let {confirm} = await prompts({
-			type: 'confirm',
-			name: 'confirm',
-			message: `Are you sure you want to remove maintainer ${chalk.red(maintainer)} from ${chalk.red(config.package?.name)} package?`,
-			initial: true,
-		}, promptsConfig);
+		let {confirm} = await prompts(
+			{
+				type: 'confirm',
+				name: 'confirm',
+				message: `Are you sure you want to remove maintainer ${chalk.red(maintainer)} from ${chalk.red(config.package?.name)} package?`,
+				initial: true,
+			},
+			promptsConfig,
+		);
 
 		if (!confirm) {
 			return;
@@ -96,7 +106,9 @@ export async function removeMaintainer(maintainer : string, yes = false) {
 	let res = await actor.removeMaintainer(config.package?.name || '', principal);
 	if ('ok' in res) {
 		console.log(chalk.green('Success!'));
-		console.log(`Removed maintainer ${chalk.bold(maintainer)} from package ${chalk.bold(config.package?.name)}`);
+		console.log(
+			`Removed maintainer ${chalk.bold(maintainer)} from package ${chalk.bold(config.package?.name)}`,
+		);
 	}
 	else {
 		console.error(chalk.red('Error: ') + res.err);

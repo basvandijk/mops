@@ -88,12 +88,17 @@ export class CompactReporter implements Reporter {
 			i++;
 		}
 
-		let output = `[${res.join('')}]\n`
-			+ `${chalk.gray(((Date.now() - this.#startTime) / 1000).toFixed(2) + 's')}`
-			+ `, total ${this.#allFiles.size} files`
-			+ `, passed ${chalk.greenBright(this.passedFiles)} files`
-			+ (this.skipped ? `, skipped ${chalk[this.skipped ? 'yellowBright' : 'gray'](this.skipped)} cases` : '')
-			+ (this.failed ? `, failed ${chalk[this.failed ? 'redBright' : 'gray'](this.failed)} cases` : '');
+		let output =
+			`[${res.join('')}]\n` +
+			`${chalk.gray(((Date.now() - this.#startTime) / 1000).toFixed(2) + 's')}` +
+			`, total ${this.#allFiles.size} files` +
+			`, passed ${chalk.greenBright(this.passedFiles)} files` +
+			(this.skipped
+				? `, skipped ${chalk[this.skipped ? 'yellowBright' : 'gray'](this.skipped)} cases`
+				: '') +
+			(this.failed
+				? `, failed ${chalk[this.failed ? 'redBright' : 'gray'](this.failed)} cases`
+				: '');
 
 		logUpdate(output);
 	}

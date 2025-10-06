@@ -9,8 +9,15 @@ import {checkConfigFile, progressBar, readConfig} from '../../mops.js';
 import {getHighestVersion} from '../../api/getHighestVersion.js';
 import {storageActor} from '../../api/actors.js';
 import {parallel} from '../../parallel.js';
-import {getDepCacheDir, getMopsDepCacheName, isDepCached} from '../../cache.js';
-import {downloadFile, getPackageFilesInfo} from '../../api/downloadPackageFiles.js';
+import {
+	getDepCacheDir,
+	getMopsDepCacheName,
+	isDepCached,
+} from '../../cache.js';
+import {
+	downloadFile,
+	getPackageFilesInfo,
+} from '../../api/downloadPackageFiles.js';
 import {installDeps} from './install-deps.js';
 import {getDepName} from '../../helpers/get-dep-name.js';
 
@@ -22,7 +29,17 @@ type InstallMopsDepOptions = {
 	ignoreTransitive ?: boolean;
 };
 
-export async function installMopsDep(pkg : string, version = '', {verbose, silent, dep, threads, ignoreTransitive} : InstallMopsDepOptions = {}) : Promise<boolean> {
+export async function installMopsDep(
+	pkg : string,
+	version = '',
+	{
+		verbose,
+		silent,
+		dep,
+		threads,
+		ignoreTransitive,
+	} : InstallMopsDepOptions = {},
+) : Promise<boolean> {
 	threads = threads || 12;
 	let depName = getDepName(pkg);
 
@@ -36,7 +53,10 @@ export async function installMopsDep(pkg : string, version = '', {verbose, silen
 	let step = 0;
 	let progress = () => {
 		step++;
-		silent || logUpdate(`${dep ? 'Dependency' : 'Installing'} ${depName}@${version} ${progressBar(step, total)}`);
+		silent ||
+			logUpdate(
+				`${dep ? 'Dependency' : 'Installing'} ${depName}@${version} ${progressBar(step, total)}`,
+			);
 	};
 	progress();
 
@@ -54,7 +74,10 @@ export async function installMopsDep(pkg : string, version = '', {verbose, silen
 
 	// global cache hit
 	if (isDepCached(cacheName)) {
-		silent || logUpdate(`${dep ? 'Dependency' : 'Installing'} ${depName}@${version} (cache)`);
+		silent ||
+			logUpdate(
+				`${dep ? 'Dependency' : 'Installing'} ${depName}@${version} (cache)`,
+			);
 	}
 	// download
 	else {
@@ -68,7 +91,7 @@ export async function installMopsDep(pkg : string, version = '', {verbose, silen
 
 			total = fileIds.length + 2;
 
-			let filesData = new Map;
+			let filesData = new Map();
 			let storage = await storageActor(storageId);
 
 			await parallel(threads, fileIds, async (fileId : string) => {
@@ -85,10 +108,18 @@ export async function installMopsDep(pkg : string, version = '', {verbose, silen
 
 			// write files to global cache
 			try {
-				await Promise.all(Array.from(filesData.entries()).map(async ([filePath, data]) => {
-					await fs.promises.mkdir(path.join(cacheDir, path.dirname(filePath)), {recursive: true});
-					await fs.promises.writeFile(path.join(cacheDir, filePath), Buffer.from(data));
-				}));
+				await Promise.all(
+					Array.from(filesData.entries()).map(async ([filePath, data]) => {
+						await fs.promises.mkdir(
+							path.join(cacheDir, path.dirname(filePath)),
+							{recursive: true},
+						);
+						await fs.promises.writeFile(
+							path.join(cacheDir, filePath),
+							Buffer.from(data),
+						);
+					}),
+				);
 			}
 			catch (err) {
 				console.error(chalk.red('Error: ') + err);
@@ -116,7 +147,10 @@ export async function installMopsDep(pkg : string, version = '', {verbose, silen
 	// install dependencies
 	if (!ignoreTransitive) {
 		let config = readConfig(path.join(cacheDir, 'mops.toml'));
-		let res = await installDeps(Object.values(config.dependencies || {}), {silent, verbose});
+		let res = await installDeps(Object.values(config.dependencies || {}), {
+			silent,
+			verbose,
+		});
 
 		if (!res) {
 			return false;

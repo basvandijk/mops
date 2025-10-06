@@ -1,5 +1,9 @@
 import process from 'node:process';
-import {ChildProcessWithoutNullStreams, execSync, spawn} from 'node:child_process';
+import {
+	ChildProcessWithoutNullStreams,
+	execSync,
+	spawn,
+} from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import {PassThrough} from 'node:stream';
@@ -8,7 +12,10 @@ import {spawn as spawnAsync} from 'promisify-child-process';
 import {IDL} from '@icp-sdk/core/candid';
 import {Actor, HttpAgent} from '@icp-sdk/core/agent';
 import {PocketIc, PocketIcServer} from 'pic-ic';
-import {PocketIc as PocketIcMops, PocketIcServer as PocketIcServerMops} from 'pic-js-mops';
+import {
+	PocketIc as PocketIcMops,
+	PocketIcServer as PocketIcServerMops,
+} from 'pic-js-mops';
 import chalk from 'chalk';
 
 import {readConfig} from '../mops.js';
@@ -25,7 +32,10 @@ type StartOptions = {
 export class Replica {
 	type : 'dfx' | 'pocket-ic' | 'dfx-pocket-ic' = 'dfx';
 	verbose = false;
-	canisters : Record<string, {cwd : string; canisterId : string; actor : any; stream : PassThrough;}> = {};
+	canisters : Record<
+		string,
+		{ cwd : string; canisterId : string; actor : any; stream : PassThrough }
+	> = {};
 	pocketIcServer ?: PocketIcServer | PocketIcServerMops;
 	pocketIc ?: PocketIc | PocketIcMops;
 	dfxProcess ?: ChildProcessWithoutNullStreams;
@@ -41,12 +51,31 @@ export class Replica {
 
 		if (this.type === 'dfx' || this.type === 'dfx-pocket-ic') {
 			fs.mkdirSync(this.dir, {recursive: true});
-			fs.writeFileSync(path.join(this.dir, 'dfx.json'), JSON.stringify(this.dfxJson(''), null, 2));
-			fs.writeFileSync(path.join(this.dir, 'canister.did'), 'service : { runTests: () -> (); }');
+			fs.writeFileSync(
+				path.join(this.dir, 'dfx.json'),
+				JSON.stringify(this.dfxJson(''), null, 2),
+			);
+			fs.writeFileSync(
+				path.join(this.dir, 'canister.did'),
+				'service : { runTests: () -> (); }',
+			);
 
 			await this.stop();
 
-			this.dfxProcess = spawn('dfx', ['start', this.type === 'dfx-pocket-ic' ? '--pocketic' : '', '--clean', (this.verbose ? '' : '-qqqq'), '--artificial-delay', '0'].filter(x => x).flat(), {cwd: this.dir});
+			this.dfxProcess = spawn(
+				'dfx',
+				[
+					'start',
+					this.type === 'dfx-pocket-ic' ? '--pocketic' : '',
+					'--clean',
+					this.verbose ? '' : '-qqqq',
+					'--artificial-delay',
+					'0',
+				]
+					.filter((x) => x)
+					.flat(),
+				{cwd: this.dir},
+			);
 
 			// process canister logs
 			this._attachCanisterLogHandler(this.dfxProcess);
@@ -72,14 +101,14 @@ export class Replica {
 			let ok = false;
 			while (!ok) {
 				await fetch('http://127.0.0.1:4945/api/v2/status')
-					.then(res => {
+					.then((res) => {
 						if (res.status === 200) {
 							ok = true;
 						}
 					})
 					.catch(() => {})
 					.finally(() => {
-						return new Promise(resolve => setTimeout(resolve, 1000));
+						return new Promise((resolve) => setTimeout(resolve, 1000));
 					});
 			}
 		}
@@ -87,8 +116,13 @@ export class Replica {
 			let pocketIcBin = await toolchain.bin('pocket-ic');
 
 			let config = readConfig();
-			if (config.toolchain?.['pocket-ic'] !== '4.0.0' && !config.toolchain?.['pocket-ic']?.startsWith('9.')) {
-				console.error('Current Mops CLI only supports pocket-ic 9.x.x and 4.0.0');
+			if (
+				config.toolchain?.['pocket-ic'] !== '4.0.0' &&
+				!config.toolchain?.['pocket-ic']?.startsWith('9.')
+			) {
+				console.error(
+					'Current Mops CLI only supports pocket-ic 9.x.x and 4.0.0',
+				);
 				process.exit(1);
 			}
 
@@ -114,7 +148,9 @@ export class Replica {
 			}
 
 			// process canister logs
-			this._attachCanisterLogHandler(this.pocketIcServer.serverProcess as ChildProcessWithoutNullStreams);
+			this._attachCanisterLogHandler(
+				this.pocketIcServer.serverProcess as ChildProcessWithoutNullStreams,
+			);
 		}
 	}
 
@@ -179,7 +215,13 @@ export class Replica {
 		}
 	}
 
-	async deploy(name : string, wasm : string, idlFactory : IDL.InterfaceFactory, cwd : string = process.cwd(), signal ?: AbortSignal) {
+	async deploy(
+		name : string,
+		wasm : string,
+		idlFactory : IDL.InterfaceFactory,
+		cwd : string = process.cwd(),
+		signal ?: AbortSignal,
+	) {
 		if (this.type === 'dfx' || this.type === 'dfx-pocket-ic') {
 			// prepare dfx.json for current canister
 			let dfxJson = path.join(this.dir, 'dfx.json');
@@ -191,13 +233,32 @@ export class Replica {
 			let newDfxJsonData = this.dfxJson(name, name + '.wasm');
 
 			if (oldDfxJsonData.canisters) {
-				newDfxJsonData.canisters = Object.assign(oldDfxJsonData.canisters, newDfxJsonData.canisters);
+				newDfxJsonData.canisters = Object.assign(
+					oldDfxJsonData.canisters,
+					newDfxJsonData.canisters,
+				);
 			}
 
 			fs.mkdirSync(this.dir, {recursive: true});
 			fs.writeFileSync(dfxJson, JSON.stringify(newDfxJsonData, null, 2));
 
-			await spawnAsync('dfx', ['deploy', name, '--mode', 'reinstall', '--yes', '--identity', 'anonymous'], {cwd: this.dir, signal, stdio: this.verbose ? 'pipe' : ['pipe', 'ignore', 'pipe']}).catch((error) => {
+			await spawnAsync(
+				'dfx',
+				[
+					'deploy',
+					name,
+					'--mode',
+					'reinstall',
+					'--yes',
+					'--identity',
+					'anonymous',
+				],
+				{
+					cwd: this.dir,
+					signal,
+					stdio: this.verbose ? 'pipe' : ['pipe', 'ignore', 'pipe'],
+				},
+			).catch((error) => {
 				if (error.code === 'ABORT_ERR') {
 					return {stderr: ''};
 				}
@@ -208,7 +269,15 @@ export class Replica {
 				return;
 			}
 
-			await spawnAsync('dfx', ['ledger', 'fabricate-cycles', '--canister', name, '--t', '100'], {cwd: this.dir, signal, stdio: this.verbose ? 'pipe' : ['pipe', 'ignore', 'pipe']}).catch((error) => {
+			await spawnAsync(
+				'dfx',
+				['ledger', 'fabricate-cycles', '--canister', name, '--t', '100'],
+				{
+					cwd: this.dir,
+					signal,
+					stdio: this.verbose ? 'pipe' : ['pipe', 'ignore', 'pipe'],
+				},
+			).catch((error) => {
 				if (error.code === 'ABORT_ERR') {
 					return {stderr: ''};
 				}
@@ -219,7 +288,9 @@ export class Replica {
 				return;
 			}
 
-			let canisterId = execSync(`dfx canister id ${name}`, {cwd: this.dir}).toString().trim();
+			let canisterId = execSync(`dfx canister id ${name}`, {cwd: this.dir})
+				.toString()
+				.trim();
 
 			let actor = Actor.createActor(idlFactory, {
 				agent: await HttpAgent.create({
@@ -237,8 +308,11 @@ export class Replica {
 			};
 		}
 		else if (this.pocketIc) {
-			type PocketIcSetupCanister = PocketIcMops['setupCanister'] & PocketIc['setupCanister'];
-			let {canisterId, actor} = await (this.pocketIc.setupCanister as PocketIcSetupCanister)({
+			type PocketIcSetupCanister = PocketIcMops['setupCanister'] &
+				PocketIc['setupCanister'];
+			let {canisterId, actor} = await (
+				this.pocketIc.setupCanister as PocketIcSetupCanister
+			)({
 				wasm,
 				idlFactory,
 			});
@@ -292,7 +366,11 @@ export class Replica {
 		return null;
 	}
 
-	dfxJson(canisterName : string, wasmPath = 'canister.wasm', didPath = 'canister.did') {
+	dfxJson(
+		canisterName : string,
+		wasmPath = 'canister.wasm',
+		didPath = 'canister.did',
+	) {
 		let canisters : Record<string, any> = {};
 		if (canisterName) {
 			canisters[canisterName] = {

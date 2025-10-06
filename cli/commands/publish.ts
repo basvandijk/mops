@@ -7,11 +7,22 @@ import {globbySync} from 'globby';
 import {minimatch} from 'minimatch';
 import prompts from 'prompts';
 
-import {checkConfigFile, getIdentity, getRootDir, progressBar, readConfig} from '../mops.js';
+import {
+	checkConfigFile,
+	getIdentity,
+	getRootDir,
+	progressBar,
+	readConfig,
+} from '../mops.js';
 import {mainActor} from '../api/actors.js';
 import {parallel} from '../parallel.js';
 import {docs} from './docs.js';
-import {Benchmarks, DependencyV2, PackageConfigV3_Publishing, Requirement} from '../declarations/main/main.did.js';
+import {
+	Benchmarks,
+	DependencyV2,
+	PackageConfigV3_Publishing,
+	Requirement,
+} from '../declarations/main/main.did.js';
 import {Dependency} from '../types.js';
 import {testWithReporter} from './test/test.js';
 import {SilentReporter} from './test/reporters/silent-reporter.js';
@@ -19,7 +30,14 @@ import {findChangelogEntry} from '../helpers/find-changelog-entry.js';
 import {bench} from './bench.js';
 import {docsCoverage} from './docs-coverage.js';
 
-export async function publish(options : {docs ?: boolean, test ?: boolean, bench ?: boolean, verbose ?: boolean} = {}) {
+export async function publish(
+	options : {
+		docs ?: boolean;
+		test ?: boolean;
+		bench ?: boolean;
+		verbose ?: boolean;
+	} = {},
+) {
 	if (!checkConfigFile()) {
 		return;
 	}
@@ -31,7 +49,15 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 
 	// validate
 	for (let key of Object.keys(config)) {
-		if (!['package', 'dependencies', 'dev-dependencies', 'toolchain', 'requirements'].includes(key)) {
+		if (
+			![
+				'package',
+				'dependencies',
+				'dev-dependencies',
+				'toolchain',
+				'requirements',
+			].includes(key)
+		) {
 			console.log(chalk.red('Error: ') + `Unknown config section [${key}]`);
 			process.exit(1);
 		}
@@ -39,13 +65,19 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 
 	// required fields
 	if (!config.package) {
-		console.log(chalk.red('Error: ') + 'Please specify [package] section in your mops.toml');
+		console.log(
+			chalk.red('Error: ') +
+				'Please specify [package] section in your mops.toml',
+		);
 		process.exit(1);
 	}
 	for (let key of ['name', 'version']) {
 		// @ts-ignore
 		if (!config.package[key]) {
-			console.log(chalk.red('Error: ') + `Please specify "${key}" in [package] section in your mops.toml`);
+			console.log(
+				chalk.red('Error: ') +
+					`Please specify "${key}" in [package] section in your mops.toml`,
+			);
 			process.exit(1);
 		}
 	}
@@ -109,7 +141,9 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 	for (let [key, max] of Object.entries(keysMax)) {
 		// @ts-ignore
 		if (config.package[key] && config.package[key].length > max) {
-			console.log(chalk.red('Error: ') + `package.${key} value max length is ${max}`);
+			console.log(
+				chalk.red('Error: ') + `package.${key} value max length is ${max}`,
+			);
 			process.exit(1);
 		}
 	}
@@ -122,7 +156,10 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 
 		for (let dep of Object.values(config.dependencies)) {
 			if (dep.path) {
-				console.log(chalk.red('Error: ') + 'you can\'t publish packages with local dependencies');
+				console.log(
+					chalk.red('Error: ') +
+						'you can\'t publish packages with local dependencies',
+				);
 				process.exit(1);
 			}
 			delete dep.path;
@@ -133,7 +170,10 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 				let res = await prompts({
 					type: 'confirm',
 					name: 'ok',
-					message: chalk.yellow('GitHub dependencies make the registry less reliable and limit its capabilities.\nIf you are the owner of the dependency, please consider publishing it to the Mops registry.') + '\n\nPublish anyway?',
+					message:
+						chalk.yellow(
+							'GitHub dependencies make the registry less reliable and limit its capabilities.\nIf you are the owner of the dependency, please consider publishing it to the Mops registry.',
+						) + '\n\nPublish anyway?',
 				});
 				if (!res.ok) {
 					return;
@@ -150,7 +190,10 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 
 		for (let dep of Object.values(config['dev-dependencies'])) {
 			if (dep.path) {
-				console.log(chalk.red('Error: ') + 'you can\'t publish packages with local dev-dependencies');
+				console.log(
+					chalk.red('Error: ') +
+						'you can\'t publish packages with local dev-dependencies',
+				);
 				process.exit(1);
 			}
 			delete dep.path;
@@ -169,7 +212,9 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 	if (config.package.files) {
 		for (let file of config.package.files) {
 			if (file.startsWith('/') || file.startsWith('../')) {
-				console.log(chalk.red('Error: ') + 'file path cannot start with \'/\' or \'../\'');
+				console.log(
+					chalk.red('Error: ') + 'file path cannot start with \'/\' or \'../\'',
+				);
 				return;
 			}
 		}
@@ -212,9 +257,13 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 		moc: config.package.moc || '',
 		donation: config.package.donation || '',
 		dependencies: Object.values(config.dependencies || {}).map(toBackendDep),
-		devDependencies: Object.values(config['dev-dependencies'] || {}).map(toBackendDep),
+		devDependencies: Object.values(config['dev-dependencies'] || {}).map(
+			toBackendDep,
+		),
 		scripts: [],
-		requirements: [Object.entries(config.requirements || {}).map((req) => toBackendReq(req))],
+		requirements: [
+			Object.entries(config.requirements || {}).map((req) => toBackendReq(req)),
+		],
 	};
 
 	let defaultFiles = [
@@ -268,8 +317,16 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 
 	// check allowed exts
 	for (let file of files) {
-		if (!minimatch(file, '**/*.{mo,did,md,toml}') && !file.toLowerCase().endsWith('license') && !file.toLowerCase().endsWith('notice') && file !== docsFile) {
-			console.log(chalk.red('Error: ') + `file ${file} has unsupported extension. Allowed: .mo, .did, .md, .toml`);
+		if (
+			!minimatch(file, '**/*.{mo,did,md,toml}') &&
+			!file.toLowerCase().endsWith('license') &&
+			!file.toLowerCase().endsWith('notice') &&
+			file !== docsFile
+		) {
+			console.log(
+				chalk.red('Error: ') +
+					`file ${file} has unsupported extension. Allowed: .mo, .did, .md, .toml`,
+			);
 			process.exit(1);
 		}
 	}
@@ -279,7 +336,10 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 	let changelog = parseChangelog(config.package.version);
 	if (!changelog && config.package.repository) {
 		console.log('Fetching release notes from GitHub...');
-		changelog = await fetchGitHubReleaseNotes(config.package.repository, config.package.version);
+		changelog = await fetchGitHubReleaseNotes(
+			config.package.repository,
+			config.package.version,
+		);
 	}
 	if (changelog) {
 		console.log('Changelog:');
@@ -287,10 +347,15 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 	}
 
 	// test
-	let reporter = new SilentReporter;
+	let reporter = new SilentReporter();
 	if (options.test) {
 		console.log('Running tests...');
-		await testWithReporter(reporter, '', 'interpreter', config.toolchain?.['pocket-ic'] ? 'pocket-ic' : 'dfx');
+		await testWithReporter(
+			reporter,
+			'',
+			'interpreter',
+			config.toolchain?.['pocket-ic'] ? 'pocket-ic' : 'dfx',
+		);
 		if (reporter.failed > 0) {
 			console.log(chalk.red('Error: ') + 'tests failed');
 			process.exit(1);
@@ -373,7 +438,12 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 			file = path.basename(file);
 		}
 
-		let res = await actor.startFileUpload(puiblishingId, file, BigInt(chunkCount), firstChunk);
+		let res = await actor.startFileUpload(
+			puiblishingId,
+			file,
+			BigInt(chunkCount),
+			firstChunk,
+		);
 		if ('err' in res) {
 			console.log(chalk.red('Error: ') + res.err);
 			process.exit(1);
@@ -383,7 +453,12 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 		for (let i = 1; i < chunkCount; i++) {
 			let start = i * chunkSize;
 			let chunk = Array.from(content.slice(start, start + chunkSize));
-			let res = await actor.uploadFileChunk(puiblishingId, fileId, BigInt(i), chunk);
+			let res = await actor.uploadFileChunk(
+				puiblishingId,
+				fileId,
+				BigInt(i),
+				chunk,
+			);
 			if ('err' in res) {
 				console.log(chalk.red('Error: ') + res.err);
 				process.exit(1);
@@ -391,7 +466,10 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 		}
 	});
 
-	fs.rmSync(path.join(rootDir, '.mops/.docs'), {force: true, recursive: true});
+	fs.rmSync(path.join(rootDir, '.mops/.docs'), {
+		force: true,
+		recursive: true,
+	});
 
 	// finish
 	progress();
@@ -403,7 +481,10 @@ export async function publish(options : {docs ?: boolean, test ?: boolean, bench
 		process.exit(1);
 	}
 
-	console.log(chalk.green('Published ') + `${config.package.name}@${config.package.version}`);
+	console.log(
+		chalk.green('Published ') +
+			`${config.package.name}@${config.package.version}`,
+	);
 }
 
 function parseChangelog(version : string) : string {
@@ -433,17 +514,28 @@ function parseChangelog(version : string) : string {
 	return changelog || '';
 }
 
-async function fetchGitHubReleaseNotes(repo : string, version : string) : Promise<string> {
+async function fetchGitHubReleaseNotes(
+	repo : string,
+	version : string,
+) : Promise<string> {
 	let repoPath = new URL(repo).pathname;
-	let res = await fetch(`https://api.github.com/repos${repoPath}/releases/tags/${version}`);
+	let res = await fetch(
+		`https://api.github.com/repos${repoPath}/releases/tags/${version}`,
+	);
 	let release = await res.json();
 
 	if (release.message === 'Not Found') {
-		res = await fetch(`https://api.github.com/repos${repoPath}/releases/tags/v${version}`);
+		res = await fetch(
+			`https://api.github.com/repos${repoPath}/releases/tags/v${version}`,
+		);
 		release = await res.json();
 
 		if (release.message === 'Not Found') {
-			console.log(chalk.yellow(`No GitHub release found with name ${version} or v${version}`));
+			console.log(
+				chalk.yellow(
+					`No GitHub release found with name ${version} or v${version}`,
+				),
+			);
 			return '';
 		}
 	}

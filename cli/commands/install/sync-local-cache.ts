@@ -4,7 +4,9 @@ import {copyCache, getDepCacheName} from '../../cache.js';
 import {getDependencyType, getRootDir} from '../../mops.js';
 import {resolvePackages} from '../../resolve-packages.js';
 
-export async function syncLocalCache({verbose = false} = {}) : Promise<Record<string, string>> {
+export async function syncLocalCache({verbose = false} = {}) : Promise<
+	Record<string, string>
+> {
 	let resolvedPackages = await resolvePackages();
 	let rootDir = getRootDir();
 
@@ -12,23 +14,25 @@ export async function syncLocalCache({verbose = false} = {}) : Promise<Record<st
 
 	let installedDeps : Record<string, string> = {};
 
-	await Promise.all(Object.entries(resolvedPackages).map(([name, value]) => {
-		let depType = getDependencyType(value);
+	await Promise.all(
+		Object.entries(resolvedPackages).map(([name, value]) => {
+			let depType = getDependencyType(value);
 
-		if (depType === 'mops' || depType === 'github') {
-			let cacheName = getDepCacheName(name, value);
-			let dest = path.join(rootDir, '.mops', cacheName);
+			if (depType === 'mops' || depType === 'github') {
+				let cacheName = getDepCacheName(name, value);
+				let dest = path.join(rootDir, '.mops', cacheName);
 
-			if (!fs.existsSync(dest)) {
-				if (depType === 'mops') {
-					installedDeps[name] = value;
+				if (!fs.existsSync(dest)) {
+					if (depType === 'mops') {
+						installedDeps[name] = value;
+					}
+					return copyCache(cacheName, path.join(rootDir, '.mops', cacheName));
 				}
-				return copyCache(cacheName, path.join(rootDir, '.mops', cacheName));
 			}
-		}
 
-		return Promise.resolve();
-	})).catch((errors) => {
+			return Promise.resolve();
+		}),
+	).catch((errors) => {
 		throw errors?.[0];
 	});
 

@@ -9,7 +9,9 @@ export async function bump(part : string) {
 	}
 
 	if (part && !['major', 'minor', 'patch'].includes(part)) {
-		console.log(chalk.red('Unknown version part. Available parts: major, minor, patch'));
+		console.log(
+			chalk.red('Unknown version part. Available parts: major, minor, patch'),
+		);
 		process.exit(1);
 	}
 
@@ -28,9 +30,18 @@ export async function bump(part : string) {
 			name: 'part',
 			message: 'Select new version:',
 			choices: [
-				{title: `${updateVersion(config.package.version, 'major')} ${chalk.dim('(major, breaking changes)')}`, value: 'major'},
-				{title: `${updateVersion(config.package.version, 'minor')} ${chalk.dim('(minor, new features)')}`, value: 'minor'},
-				{title: `${updateVersion(config.package.version, 'patch')} ${chalk.dim('(patch, bug fixes)')}`, value: 'patch'},
+				{
+					title: `${updateVersion(config.package.version, 'major')} ${chalk.dim('(major, breaking changes)')}`,
+					value: 'major',
+				},
+				{
+					title: `${updateVersion(config.package.version, 'minor')} ${chalk.dim('(minor, new features)')}`,
+					value: 'minor',
+				},
+				{
+					title: `${updateVersion(config.package.version, 'patch')} ${chalk.dim('(patch, bug fixes)')}`,
+					value: 'patch',
+				},
 			],
 			initial: 2,
 		});

@@ -4,7 +4,10 @@ import markdownIt from 'markdown-it';
 export function markdownToHtml(markdown : string, repositoryUrl ?: string) {
 	// make links to issues and PRs clickable
 	if (repositoryUrl) {
-		markdown = markdown.replace(/\(#(\d+)\)/g, `([#$1](${repositoryUrl}/issues/$1))`);
+		markdown = markdown.replace(
+			/\(#(\d+)\)/g,
+			`([#$1](${repositoryUrl}/issues/$1))`,
+		);
 	}
 
 	return markdownIt({

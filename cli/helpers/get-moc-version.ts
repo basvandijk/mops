@@ -7,7 +7,10 @@ export function getMocVersion(throwOnError = false) : string {
 		return '';
 	}
 	try {
-		let match = execFileSync(mocPath, ['--version']).toString().trim().match(/Motoko compiler ([^\s]+) .*/);
+		let match = execFileSync(mocPath, ['--version'])
+			.toString()
+			.trim()
+			.match(/Motoko compiler ([^\s]+) .*/);
 		return match?.[1] || '';
 	}
 	catch (e) {

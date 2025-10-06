@@ -22,7 +22,10 @@ export let isCached = (version : string) => {
 	return fs.existsSync(dir) && fs.existsSync(path.join(dir, 'wasmtime'));
 };
 
-export let download = async (version : string, {silent = false, verbose = false} = {}) => {
+export let download = async (
+	version : string,
+	{silent = false, verbose = false} = {},
+) => {
 	if (!version) {
 		console.error('version is not defined');
 		process.exit(1);

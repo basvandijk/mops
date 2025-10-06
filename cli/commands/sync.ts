@@ -20,8 +20,10 @@ export async function sync({lock} : SyncOptions = {}) {
 	let missing = await getMissingPackages();
 	let unused = await getUnusedPackages();
 
-	missing.length && console.log(`${chalk.yellow('Missing packages:')} ${missing.join(', ')}`);
-	unused.length && console.log(`${chalk.yellow('Unused packages:')} ${unused.join(', ')}`);
+	missing.length &&
+		console.log(`${chalk.yellow('Missing packages:')} ${missing.join(', ')}`);
+	unused.length &&
+		console.log(`${chalk.yellow('Unused packages:')} ${unused.join(', ')}`);
 
 	let config = readConfig();
 	let deps = new Set(Object.keys(config.dependencies || {}));
@@ -58,13 +60,22 @@ async function getUsedPackages() : Promise<string[]> {
 		ignore: ignore,
 	});
 
-	let packages : Set<string> = new Set;
+	let packages : Set<string> = new Set();
 
 	for (let file of files) {
-		let deps : string[] = execSync(`${mocPath} --print-deps ${path.join(rootDir, file)}`).toString().trim().split('\n');
+		let deps : string[] = execSync(
+			`${mocPath} --print-deps ${path.join(rootDir, file)}`,
+		)
+			.toString()
+			.trim()
+			.split('\n');
 
 		for (let dep of deps) {
-			if (dep.startsWith('mo:') && !dep.startsWith('mo:prim') && !dep.startsWith('mo:⛔')) {
+			if (
+				dep.startsWith('mo:') &&
+				!dep.startsWith('mo:prim') &&
+				!dep.startsWith('mo:⛔')
+			) {
 				packages.add(dep.replace(/^mo:([^/]+).*$/, '$1'));
 			}
 		}
@@ -75,7 +86,10 @@ async function getUsedPackages() : Promise<string[]> {
 
 async function getMissingPackages() : Promise<string[]> {
 	let config = readConfig();
-	let allDeps = [...Object.keys(config.dependencies || {}), ...Object.keys(config['dev-dependencies'] || {})];
+	let allDeps = [
+		...Object.keys(config.dependencies || {}),
+		...Object.keys(config['dev-dependencies'] || {}),
+	];
 	let missing = new Set(await getUsedPackages());
 	for (let pkg of allDeps) {
 		missing.delete(pkg);
@@ -85,7 +99,10 @@ async function getMissingPackages() : Promise<string[]> {
 
 async function getUnusedPackages() : Promise<string[]> {
 	let config = readConfig();
-	let allDeps = new Set([...Object.keys(config.dependencies || {}), ...Object.keys(config['dev-dependencies'] || {})]);
+	let allDeps = new Set([
+		...Object.keys(config.dependencies || {}),
+		...Object.keys(config['dev-dependencies'] || {}),
+	]);
 	let used = await getUsedPackages();
 	for (let pkg of used) {
 		allDeps.delete(pkg);

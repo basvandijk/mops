@@ -1,5 +1,11 @@
 import process from 'node:process';
-import {existsSync, mkdirSync, createWriteStream, readFileSync, writeFileSync} from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	createWriteStream,
+	readFileSync,
+	writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 import {pipeline} from 'node:stream';
 import {deleteSync} from 'del';
@@ -16,10 +22,17 @@ const dhallFileToJson = async (filePath : string, silent : boolean) => {
 		let cwd = new URL(path.dirname(import.meta.url)).pathname;
 		let res;
 		try {
-			res = await execaCommand(`dhall-to-json --file ${filePath}`, {preferLocal:true, cwd});
+			res = await execaCommand(`dhall-to-json --file ${filePath}`, {
+				preferLocal: true,
+				cwd,
+			});
 		}
 		catch (err : any) {
-			silent || console.error('dhall-to-json error:', err.message?.split('Message:')[0]);
+			silent ||
+				console.error(
+					'dhall-to-json error:',
+					err.message?.split('Message:')[0],
+				);
 			return null;
 		}
 
@@ -46,7 +59,10 @@ export type VesselDependencies = Array<{
 	path ?: string; // local package
 }>;
 
-export const readVesselConfig = async (dir : string, {cache = true, silent = false} = {}) : Promise<VesselConfig | null> => {
+export const readVesselConfig = async (
+	dir : string,
+	{cache = true, silent = false} = {},
+) : Promise<VesselConfig | null> => {
 	const cachedFile = (dir || process.cwd()) + '/vessel.json';
 
 	if (existsSync(cachedFile)) {
@@ -83,7 +99,11 @@ export const readVesselConfig = async (dir : string, {cache = true, silent = fal
 	return config;
 };
 
-export const downloadFromGithub = async (repo : string, dest : string, onProgress : any) => {
+export const downloadFromGithub = async (
+	repo : string,
+	dest : string,
+	onProgress : any,
+) => {
 	const {branch, org, gitName, commitHash} = parseGithubURL(repo);
 
 	const zipFile = `https://github.com/${org}/${gitName}/archive/${commitHash || branch}.zip`;
@@ -91,18 +111,20 @@ export const downloadFromGithub = async (repo : string, dest : string, onProgres
 
 	const promise = new Promise((resolve, reject) => {
 		readStream.on('error', (err) => {
-			console.error(chalk.red(`Error: failed to download from GitHub: ${zipFile}`));
+			console.error(
+				chalk.red(`Error: failed to download from GitHub: ${zipFile}`),
+			);
 			console.error(err.message);
 			reject(err);
 		});
 
 		readStream.on('downloadProgress', ({transferred, total}) => {
-			onProgress?.(transferred, total || 2 * (1024 ** 2));
+			onProgress?.(transferred, total || 2 * 1024 ** 2);
 		});
 
 		readStream.on('response', (response) => {
 			if (response.headers.age > 3600) {
-				console.error(chalk.red('Error: ') +  'Failure - response too old');
+				console.error(chalk.red('Error: ') + 'Failure - response too old');
 				readStream.destroy(); // Destroy the stream to prevent hanging resources.
 				reject();
 				return;
@@ -111,7 +133,10 @@ export const downloadFromGithub = async (repo : string, dest : string, onProgres
 			// Prevent `onError` being called twice.
 			readStream.off('error', reject);
 			const tmpDir = path.resolve(process.cwd(), '.mops/_tmp/');
-			const tmpFile = path.resolve(tmpDir, `${gitName}@${(commitHash || branch).replaceAll('/', '___')}.zip`);
+			const tmpFile = path.resolve(
+				tmpDir,
+				`${gitName}@${(commitHash || branch).replaceAll('/', '___')}.zip`,
+			);
 
 			try {
 				mkdirSync(tmpDir, {recursive: true});
@@ -129,13 +154,15 @@ export const downloadFromGithub = async (repo : string, dest : string, onProgres
 								accept: 'application/zip',
 							},
 						};
-						decompress(tmpFile, dest, options).then((unzippedFiles) => {
-							deleteSync([tmpDir]);
-							resolve(unzippedFiles);
-						}).catch(err => {
-							deleteSync([tmpDir]);
-							reject(err);
-						});
+						decompress(tmpFile, dest, options)
+							.then((unzippedFiles) => {
+								deleteSync([tmpDir]);
+								resolve(unzippedFiles);
+							})
+							.catch((err) => {
+								deleteSync([tmpDir]);
+								reject(err);
+							});
 					}
 				});
 			}
@@ -149,7 +176,16 @@ export const downloadFromGithub = async (repo : string, dest : string, onProgres
 	return promise;
 };
 
-export const installFromGithub = async (name : string, repo : string, {verbose = false, dep = false, silent = false, ignoreTransitive = false} = {}) => {
+export const installFromGithub = async (
+	name : string,
+	repo : string,
+	{
+		verbose = false,
+		dep = false,
+		silent = false,
+		ignoreTransitive = false,
+	} = {},
+) => {
 	let cacheName = getGithubDepCacheName(name, repo);
 	let cacheDir = getDepCacheDir(cacheName);
 
@@ -160,7 +196,10 @@ export const installFromGithub = async (name : string, repo : string, {verbose =
 	}
 	else {
 		let progress = (step : number, total : number) => {
-			silent || logUpdate(`${dep ? 'Dependency' : 'Installing'} ${repo} ${progressBar(step, total)}`);
+			silent ||
+				logUpdate(
+					`${dep ? 'Dependency' : 'Installing'} ${repo} ${progressBar(step, total)}`,
+				);
 		};
 
 		progress(0, 1024 * 500);
