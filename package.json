@@ -13,6 +13,8 @@
 		"fix": "eslint . --fix",
 		"decl:cli": "dfx generate main && dfx generate bench",
 		"decl:frontend": "cp -r cli/declarations frontend",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
 		"deploy": "dfx deploy --no-wallet --identity ${IDENTITY:-default} --network ${DFX_NETWORK:-local}",
 		"deploy-local": "NODE_ENV=development dfx deploy --identity default --no-wallet main",
 		"deploy-staging": "NODE_ENV=production IDENTITY=mops DFX_NETWORK=staging npm run deploy",
@@ -37,6 +39,8 @@
 		"eslint": "8.57.0",
 		"eslint-plugin-svelte": "2.35.1",
 		"husky": "9.0.11",
+		"prettier": "3.6.2",
+		"prettier-plugin-motoko": "0.12.1",
 		"typescript": "5.4.3"
 	}
 }
