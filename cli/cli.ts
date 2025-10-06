@@ -6,17 +6,29 @@ import {Command, Argument, Option} from 'commander';
 import {init} from './commands/init.js';
 import {publish} from './commands/publish.js';
 import {sources} from './commands/sources.js';
-import {checkApiCompatibility, setNetwork, apiVersion, checkConfigFile, getNetworkFile, version} from './mops.js';
+import {
+	checkApiCompatibility,
+	setNetwork,
+	apiVersion,
+	checkConfigFile,
+	getNetworkFile,
+	version,
+} from './mops.js';
 import {getNetwork} from './api/network.js';
 import {installAll} from './commands/install/install-all.js';
 import {search} from './commands/search.js';
 import {add} from './commands/add.js';
 import {cacheSize, cleanCache, show} from './cache.js';
-import {build} from './commands/build.js';
+import {build, DEFAULT_BUILD_OUTPUT_DIR} from './commands/build.js';
 import {test} from './commands/test/test.js';
 import {template} from './commands/template.js';
 import {remove} from './commands/remove.js';
-import {importPem, getPrincipal, getUserProp, setUserProp} from './commands/user.js';
+import {
+	importPem,
+	getPrincipal,
+	getUserProp,
+	setUserProp,
+} from './commands/user.js';
 import {bump} from './commands/bump.js';
 import {sync} from './commands/sync.js';
 import {outdated} from './commands/outdated.js';
@@ -28,7 +40,11 @@ import * as self from './commands/self.js';
 import {resolvePackages} from './resolve-packages.js';
 import {watch} from './commands/watch/watch.js';
 import {addOwner, printOwners, removeOwner} from './commands/owner.js';
-import {addMaintainer, printMaintainers, removeMaintainer} from './commands/maintainer.js';
+import {
+	addMaintainer,
+	printMaintainers,
+	removeMaintainer,
+} from './commands/maintainer.js';
 import {format} from './commands/format.js';
 import {docs} from './commands/docs.js';
 import {docsCoverage} from './commands/docs-coverage.js';
@@ -41,6 +57,12 @@ declare global {
 }
 
 events.setMaxListeners(20);
+
+// Current working directory for `npm run mops ...`
+let cwd = process.env['INIT_CWD'];
+if (cwd) {
+	process.chdir(cwd);
+}
 
 let networkFile = getNetworkFile();
 if (fs.existsSync(networkFile)) {
@@ -69,7 +91,12 @@ program
 	.description('Install the package and save it to mops.toml')
 	.option('--dev', 'Add to [dev-dependencies] section')
 	.option('--verbose')
-	.addOption(new Option('--lock <action>', 'Lockfile action').choices(['update', 'ignore']))
+	.addOption(
+		new Option('--lock <action>', 'Lockfile action').choices([
+			'update',
+			'ignore',
+		]),
+	)
 	.action(async (pkg, options) => {
 		if (!checkConfigFile()) {
 			process.exit(1);
@@ -85,7 +112,12 @@ program
 	.option('--dev', 'Remove from dev-dependencies instead of dependencies')
 	.option('--verbose', 'Show more information')
 	.option('--dry-run', 'Do not actually remove anything')
-	.addOption(new Option('--lock <action>', 'Lockfile action').choices(['update', 'ignore']))
+	.addOption(
+		new Option('--lock <action>', 'Lockfile action').choices([
+			'update',
+			'ignore',
+		]),
+	)
 	.action(async (pkg, options) => {
 		if (!checkConfigFile()) {
 			process.exit(1);
@@ -100,7 +132,13 @@ program
 	.description('Install all dependencies specified in mops.toml')
 	.option('--no-toolchain', 'Do not install toolchain')
 	.option('--verbose')
-	.addOption(new Option('--lock <action>', 'Lockfile action').choices(['check', 'update', 'ignore']))
+	.addOption(
+		new Option('--lock <action>', 'Lockfile action').choices([
+			'check',
+			'update',
+			'ignore',
+		]),
+	)
 	.action(async (options) => {
 		if (!checkConfigFile()) {
 			process.exit(1);
@@ -171,13 +209,25 @@ program
 	.command('sources')
 	.description('for dfx packtool')
 	.option('--no-install', 'Do not install dependencies before running sources')
-	.addOption(new Option('--conflicts <action>', 'What to do with dependency version conflicts').choices(['ignore', 'warning', 'error']).default('warning'))
+	.addOption(
+		new Option(
+			'--conflicts <action>',
+			'What to do with dependency version conflicts',
+		)
+			.choices(['ignore', 'warning', 'error'])
+			.default('warning'),
+	)
 	.action(async (options) => {
 		if (!checkConfigFile()) {
 			process.exit(1);
 		}
 		if (options.install) {
-			await installAll({silent: true, lock: 'ignore', threads: 6, installFromLockFile: true});
+			await installAll({
+				silent: true,
+				lock: 'ignore',
+				threads: 6,
+				installFromLockFile: true,
+			});
 		}
 		await toolchain.ensureToolchainInited({strict: false});
 		let sourcesArr = await sources(options);
@@ -213,22 +263,45 @@ program
 
 // build
 program
-	.command('build [canister]')
+	.command('build [canisters...]')
 	.description('Build a canister')
-	.addOption(new Option('--verbose', 'Verbose output'))
-	.action(async (canister, options) => {
+	.addOption(new Option('-v, --verbose', 'Verbose console output'))
+	.addOption(new Option('-o, --output-dir', 'Output directory').default(DEFAULT_BUILD_OUTPUT_DIR))
+	.allowUnknownOption(true)
+	.action(async (canisters, options, command) => {
 		checkConfigFile(true);
+		const extraArgsIndex = command.args.indexOf('--');
 		await installAll({silent: true, lock: 'ignore', installFromLockFile: true});
-		await build(canister, options);
+		await build(canisters.length ? canisters : undefined, {
+			...options,
+			extraArgs:
+				extraArgsIndex !== -1 ? command.args.slice(extraArgsIndex + 1) : [],
+		});
 	});
 
 // test
 program
 	.command('test [filter]')
 	.description('Run tests')
-	.addOption(new Option('-r, --reporter <reporter>', 'Test reporter').choices(['verbose', 'compact', 'files', 'silent']))
-	.addOption(new Option('--mode <mode>', 'Test mode').choices(['interpreter', 'wasi', 'replica']).default('interpreter'))
-	.addOption(new Option('--replica <replica>', 'Which replica to use to run tests in replica mode').choices(['dfx', 'pocket-ic']))
+	.addOption(
+		new Option('-r, --reporter <reporter>', 'Test reporter').choices([
+			'verbose',
+			'compact',
+			'files',
+			'silent',
+		]),
+	)
+	.addOption(
+		new Option('--mode <mode>', 'Test mode')
+			.choices(['interpreter', 'wasi', 'replica'])
+			.default('interpreter'),
+	)
+	.addOption(
+		new Option(
+			'--replica <replica>',
+			'Which replica to use to run tests in replica mode',
+		).choices(['dfx', 'pocket-ic']),
+	)
 	.option('-w, --watch', 'Enable watch mode')
 	.option('--verbose', 'Verbose output')
 	.action(async (filter, options) => {
@@ -241,10 +314,26 @@ program
 program
 	.command('bench [filter]')
 	.description('Run benchmarks')
-	.addOption(new Option('--replica <replica>', 'Which replica to use to run benchmarks').choices(['dfx', 'pocket-ic']))
-	.addOption(new Option('--gc <gc>', 'Garbage collector').choices(['copying', 'compacting', 'generational', 'incremental']).default('copying'))
-	.addOption(new Option('--save', 'Save benchmark results to .bench/<filename>.json'))
-	.addOption(new Option('--compare', 'Run benchmark and compare results with .bench/<filename>.json'))
+	.addOption(
+		new Option(
+			'--replica <replica>',
+			'Which replica to use to run benchmarks',
+		).choices(['dfx', 'pocket-ic']),
+	)
+	.addOption(
+		new Option('--gc <gc>', 'Garbage collector')
+			.choices(['copying', 'compacting', 'generational', 'incremental'])
+			.default('copying'),
+	)
+	.addOption(
+		new Option('--save', 'Save benchmark results to .bench/<filename>.json'),
+	)
+	.addOption(
+		new Option(
+			'--compare',
+			'Run benchmark and compare results with .bench/<filename>.json',
+		),
+	)
 	// .addOption(new Option('--force-gc', 'Force GC'))
 	.addOption(new Option('--verbose', 'Show more information'))
 	.action(async (filter, options) => {
@@ -279,7 +368,9 @@ userCommand
 userCommand
 	.command('import <data>')
 	.description('Import .pem file data to use as identity')
-	.addOption(new Option('--no-encrypt', 'Do not ask for a password to encrypt identity'))
+	.addOption(
+		new Option('--no-encrypt', 'Do not ask for a password to encrypt identity'),
+	)
 	.action(async (data, options) => {
 		await importPem(data, options);
 		await getPrincipal();
@@ -288,7 +379,15 @@ userCommand
 // user set <prop> <value>
 userCommand
 	.command('set')
-	.addArgument(new Argument('<prop>').choices(['name', 'site', 'email', 'github', 'twitter']))
+	.addArgument(
+		new Argument('<prop>').choices([
+			'name',
+			'site',
+			'email',
+			'github',
+			'twitter',
+		]),
+	)
 	.addArgument(new Argument('<value>'))
 	.description('Set user property')
 	.action(async (prop, value) => {
@@ -298,7 +397,15 @@ userCommand
 // user get <prop>
 userCommand
 	.command('get')
-	.addArgument(new Argument('<prop>').choices(['name', 'site', 'email', 'github', 'twitter']))
+	.addArgument(
+		new Argument('<prop>').choices([
+			'name',
+			'site',
+			'email',
+			'github',
+			'twitter',
+		]),
+	)
 	.description('Get user property')
 	.action(async (prop) => {
 		await getUserProp(prop);
@@ -307,7 +414,9 @@ userCommand
 program.addCommand(userCommand);
 
 // mops owner *
-const ownerCommand = new Command('owner').description('Package owner management');
+const ownerCommand = new Command('owner').description(
+	'Package owner management',
+);
 
 // mops owner list
 ownerCommand
@@ -338,7 +447,9 @@ ownerCommand
 program.addCommand(ownerCommand);
 
 // mops maintainer *
-const maintainerCommand = new Command('maintainer').description('Package maintainer management');
+const maintainerCommand = new Command('maintainer').description(
+	'Package maintainer management',
+);
 
 // mops maintainer list
 maintainerCommand
@@ -380,7 +491,12 @@ program
 program
 	.command('sync')
 	.description('Add missing packages and remove unused packages')
-	.addOption(new Option('--lock <action>', 'Lockfile action').choices(['update', 'ignore']))
+	.addOption(
+		new Option('--lock <action>', 'Lockfile action').choices([
+			'update',
+			'ignore',
+		]),
+	)
 	.action(async (options) => {
 		await sync(options);
 	});
@@ -397,13 +513,20 @@ program
 program
 	.command('update [pkg]')
 	.description('Update dependencies specified in mops.toml')
-	.addOption(new Option('--lock <action>', 'Lockfile action').choices(['update', 'ignore']))
+	.addOption(
+		new Option('--lock <action>', 'Lockfile action').choices([
+			'update',
+			'ignore',
+		]),
+	)
 	.action(async (pkg, options) => {
 		await update(pkg, options);
 	});
 
 // toolchain
-const toolchainCommand = new Command('toolchain').description('Toolchain management');
+const toolchainCommand = new Command('toolchain').description(
+	'Toolchain management',
+);
 
 toolchainCommand
 	.command('init')
@@ -433,7 +556,9 @@ toolchainCommand
 
 toolchainCommand
 	.command('update')
-	.description('Update specified tool or all tools to the latest version and update mops.toml')
+	.description(
+		'Update specified tool or all tools to the latest version and update mops.toml',
+	)
 	.addArgument(new Argument('[tool]').choices(['moc', 'wasmtime', 'pocket-ic']))
 	.action(async (tool ?: Tool) => {
 		if (!checkConfigFile()) {
@@ -444,9 +569,16 @@ toolchainCommand
 
 toolchainCommand
 	.command('bin')
-	.description('Get path to the tool binary\n<tool> can be one of "moc", "wasmtime", "pocket-ic"')
+	.description(
+		'Get path to the tool binary\n<tool> can be one of "moc", "wasmtime", "pocket-ic"',
+	)
 	.addArgument(new Argument('<tool>').choices(['moc', 'wasmtime', 'pocket-ic']))
-	.addOption(new Option('--fallback', 'Fallback to the moc that comes with dfx if moc is not specified in the [toolchain] section'))
+	.addOption(
+		new Option(
+			'--fallback',
+			'Fallback to the moc that comes with dfx if moc is not specified in the [toolchain] section',
+		),
+	)
 	.action(async (tool, options) => {
 		let bin = await toolchain.bin(tool, options);
 		console.log(bin);
@@ -476,8 +608,13 @@ program.addCommand(selfCommand);
 // watch
 program
 	.command('watch')
-	.description('Watch *.mo files and check for syntax errors, warnings, run tests, generate declarations and deploy canisters')
-	.option('-e, --error', 'Check Motoko canisters or *.mo files for syntax errors')
+	.description(
+		'Watch *.mo files and check for syntax errors, warnings, run tests, generate declarations and deploy canisters',
+	)
+	.option(
+		'-e, --error',
+		'Check Motoko canisters or *.mo files for syntax errors',
+	)
 	.option('-w, --warning', 'Check Motoko canisters or *.mo files for warnings')
 	.option('-f, --format', 'Format Motoko code')
 	.option('-t, --test', 'Run tests')
@@ -493,7 +630,9 @@ program
 	.command('format [filter]')
 	.alias('fmt')
 	.description('Format Motoko code')
-	.addOption(new Option('--check', 'Check code formatting (do not change source files)'))
+	.addOption(
+		new Option('--check', 'Check code formatting (do not change source files)'),
+	)
 	.action(async (filter, options) => {
 		checkConfigFile(true);
 		let {ok} = await format(filter, options);
@@ -509,8 +648,14 @@ docsCommand
 	.command('generate')
 	.description('Generate documentation for Motoko code')
 	.addOption(new Option('--source <source>', 'Source directory').default('src'))
-	.addOption(new Option('--output <output>', 'Output directory').default('docs'))
-	.addOption(new Option('--format <format>', 'Output format').default('md').choices(['md', 'adoc', 'html']))
+	.addOption(
+		new Option('--output <output>', 'Output directory').default('docs'),
+	)
+	.addOption(
+		new Option('--format <format>', 'Output format')
+			.default('md')
+			.choices(['md', 'adoc', 'html']),
+	)
 	.action(async (options) => {
 		checkConfigFile(true);
 		await docs(options);
@@ -519,9 +664,23 @@ docsCommand
 docsCommand
 	.command('coverage')
 	.description('Documentation coverage report')
-	.addOption(new Option('-s, --source <source>', 'Source directory (with .mo files)').default('src'))
-	.addOption(new Option('-r, --reporter <reporter>', 'Coverage reporter').choices(['files', 'compact', 'missing', 'verbose']).default('files'))
-	.addOption(new Option('-t, --threshold <threshold>', 'Coverage threshold (0-100). If total coverage is below threshold, exit with error code 1').default(70))
+	.addOption(
+		new Option(
+			'-s, --source <source>',
+			'Source directory (with .mo files)',
+		).default('src'),
+	)
+	.addOption(
+		new Option('-r, --reporter <reporter>', 'Coverage reporter')
+			.choices(['files', 'compact', 'missing', 'verbose'])
+			.default('files'),
+	)
+	.addOption(
+		new Option(
+			'-t, --threshold <threshold>',
+			'Coverage threshold (0-100). If total coverage is below threshold, exit with error code 1',
+		).default(70),
+	)
 	.action(async (options) => {
 		checkConfigFile(true);
 		await docsCoverage(options);

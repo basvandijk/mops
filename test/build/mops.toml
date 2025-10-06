@@ -1,0 +1,6 @@
+[dependencies]
+base = "0.16.2"
+
+# [build]
+# foo = "src/Foo.mo"
+# bar = "src/Bar.mo"
