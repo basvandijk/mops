@@ -1,0 +1,8 @@
+.svelte-kit/
+declarations/
+
+*.md
+*.did
+*.js
+*.d.ts
+*.svelte

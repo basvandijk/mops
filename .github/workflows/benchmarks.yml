@@ -17,7 +17,7 @@ jobs:
           bun-version: 1.2.17
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dfx
         uses: dfinity/setup-dfx@main
@@ -63,7 +63,7 @@ jobs:
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
+          comment-author: "github-actions[bot]"
           body-includes: Benchmark Results
 
       - name: Create or update comment
