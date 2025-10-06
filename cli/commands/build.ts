@@ -1,7 +1,10 @@
 import { execa } from "execa";
+import { exists } from "fs-extra";
+import { basename, join, resolve } from "node:path";
 import { getMocPath } from "../helpers/get-moc-path";
 import { readDfxJson } from "../mops";
-import { sources } from "./sources";
+import { sourcesArgs } from "./sources";
+import { mkdir } from "node:fs/promises";
 
 type BuildOptions = {
   outputDir: string;
@@ -23,7 +26,7 @@ function isMotokoCanister(canisterConfig: any): boolean {
   return !canisterConfig.type || canisterConfig.type === "motoko";
 }
 
-export const DEFAULT_BUILD_OUTPUT_DIR = ".mops/_build";
+export const DEFAULT_BUILD_OUTPUT_DIR = ".mops/.build";
 
 export async function build(
   canisterNames: string[] | undefined,
@@ -33,20 +36,18 @@ export async function build(
     throw new Error("No canisters specified to build");
   }
   let outputDir = options.outputDir ?? DEFAULT_BUILD_OUTPUT_DIR;
-
-  // let buildDir = options.directory ?? '.dfx/local/canisters';
   let mocPath = getMocPath();
-  options.verbose && console.time(`build ${canisterNames ?? "all canisters"}`);
-
   let dfxConfig = readDfxJson();
-  console.log(dfxConfig); ////
   let resolvedCanisterNames: string[] =
     canisterNames ??
     Object.keys(dfxConfig.canisters).filter((c) =>
       isMotokoCanister(dfxConfig.canisters[c]),
     );
-  let mopsSources = await sources();
+  if (!(await exists(outputDir))) {
+    await mkdir(outputDir, { recursive: true });
+  }
   for (let canisterName of resolvedCanisterNames) {
+    options.verbose && console.time(`build ${canisterName}`);
     console.log("Building canister", canisterName);
     let canisterConfig = dfxConfig.canisters[canisterName];
     if (!canisterConfig) {
@@ -55,8 +56,8 @@ export async function build(
     if (canisterConfig.type && canisterConfig.type !== "motoko") {
       throw new Error(`Canister ${canisterName} is not a Motoko canister`);
     }
-    let path = canisterConfig.main;
-    if (!path) {
+    let motokoPath = canisterConfig.main;
+    if (!motokoPath) {
       throw new Error(`No main file is specified for canister ${canisterName}`);
     }
     await execa(
@@ -65,10 +66,10 @@ export async function build(
         "-c",
         "--idl",
         "-o",
-        outputDir,
-        path,
+        join(outputDir, `${canisterName}.wasm`),
+        motokoPath,
         ...(options.extraArgs || []),
-        ...mopsSources,
+        ...(await sourcesArgs()).flat(),
       ],
       {
         stdio: options.verbose ? "pipe" : ["pipe", "ignore", "pipe"],

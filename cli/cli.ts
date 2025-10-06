@@ -263,13 +263,13 @@ program
 program
   .command("build [canisters...]")
   .description("Build a canister")
-  .addOption(new Option("-v, --verbose", "Verbose console output"))
+  .addOption(new Option("--verbose", "Verbose console output"))
   .addOption(
-    new Option("-o, --output-dir", "Output directory").default(
+    new Option("--output", "Output directory").default(
       DEFAULT_BUILD_OUTPUT_DIR,
     ),
   )
-  .allowUnknownOption(true)
+  .allowUnknownOption(true) // TODO: restrict unknown before "--"
   .action(async (canisters, options, command) => {
     checkConfigFile(true);
     const extraArgsIndex = command.args.indexOf("--");
