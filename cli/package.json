@@ -20,14 +20,15 @@
   "homepage": "https://mops.one",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ZenVoich/mops.git"
+    "url": "https://github.com/dfinity/mops.git"
   },
-  "author": "Zen Voich <zen.voich@gmail.com>",
+  "author": "DFINITY",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
+    "mops": "tsx ./cli.ts",
     "build": "npm run prepare && npm run bundle",
     "dist": "tsc",
     "bundle": "rm -rf ./bundle && bun build ./cli.ts --outdir ./bundle --target node --minify --external @napi-rs/lzma --external fsevents --format esm --define '__dirname=import.meta.dirname' && npm run bundle:fix && npm run bundle:copy && npm run bundle:package-json && npm run bundle:tar",
