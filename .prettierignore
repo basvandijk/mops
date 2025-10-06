@@ -1,4 +1,6 @@
 declarations/
 
-**/*.md
-**/*.did
+*.md
+*.did
+*.js
+*.d.ts
