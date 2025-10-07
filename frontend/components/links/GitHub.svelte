@@ -1,5 +1,5 @@
 <script lang="ts">
-	import githubImg from '/img/github.svg';
+	import githubImg from "/img/github.svg";
 </script>
 
 <a aria-label="Mops is open source - Repo on GitHub" href="https://github.com/dfinity/mops" target="_blank" rel="external noopener norefferer">
