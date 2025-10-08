@@ -1,10 +1,11 @@
+import chalk from "chalk";
 import { execa } from "execa";
 import { exists } from "fs-extra";
-import { basename, join, resolve } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { getMocPath } from "../helpers/get-moc-path";
 import { readDfxJson } from "../mops";
 import { sourcesArgs } from "./sources";
-import { mkdir } from "node:fs/promises";
 
 type BuildOptions = {
   outputDir: string;
@@ -48,7 +49,7 @@ export async function build(
   }
   for (let canisterName of resolvedCanisterNames) {
     options.verbose && console.time(`build ${canisterName}`);
-    console.log("Building canister", canisterName);
+    console.log(chalk.blue("Building canister"), chalk.bold(canisterName));
     let canisterConfig = dfxConfig.canisters[canisterName];
     if (!canisterConfig) {
       throw new Error(`Cannot find canister ${canisterName} in dfx.json`);
@@ -60,21 +61,77 @@ export async function build(
     if (!motokoPath) {
       throw new Error(`No main file is specified for canister ${canisterName}`);
     }
-    await execa(
-      mocPath,
-      [
-        "-c",
-        "--idl",
-        "-o",
-        join(outputDir, `${canisterName}.wasm`),
-        motokoPath,
-        ...(options.extraArgs || []),
-        ...(await sourcesArgs()).flat(),
-      ],
-      {
-        stdio: options.verbose ? "pipe" : ["pipe", "ignore", "pipe"],
-      },
-    );
+    try {
+      const result = await execa(
+        mocPath,
+        [
+          "-c",
+          "--idl",
+          "-o",
+          join(outputDir, `${canisterName}.wasm`),
+          motokoPath,
+          ...(options.extraArgs || []),
+          ...(await sourcesArgs()).flat(),
+        ],
+        {
+          stdio: options.verbose ? "inherit" : "pipe",
+          reject: false,
+        },
+      );
+
+      if (result.exitCode !== 0) {
+        console.error(
+          chalk.red(`Error: Failed to build canister ${canisterName}`),
+        );
+        if (!options.verbose) {
+          if (result.stderr) {
+            console.error(chalk.red(result.stderr));
+          }
+          if (result.stdout?.trim()) {
+            console.error(chalk.yellow("Build output:"));
+            console.error(result.stdout);
+          }
+        }
+        // throw new Error(
+        //   `Build failed for canister ${canisterName} (exit code: ${result.exitCode})`,
+        // );
+        process.exit(1);
+      }
+
+      if (options.verbose && result.stdout && result.stdout.trim()) {
+        console.log(result.stdout);
+      }
+    } catch (error: any) {
+      if (error.message?.includes("Build failed for canister")) {
+        throw error;
+      }
+
+      console.error(
+        chalk.red(
+          `Error: Failed to execute moc compiler for canister ${canisterName}`,
+        ),
+      );
+
+      if (error.code === "ENOENT") {
+        console.error(
+          chalk.red(
+            "moc compiler not found. Please ensure it's installed and in your PATH.",
+          ),
+        );
+      } else if (error.message) {
+        console.error(chalk.red(`Details: ${error.message}`));
+      }
+
+      throw new Error(`Build execution failed for canister ${canisterName}`);
+    }
     options.verbose && console.timeEnd(`build ${canisterName}`);
+  }
+
+  if (resolvedCanisterNames.length > 1) {
+    console.log(
+      chalk.green(
+        `\n✓ Successfully built ${resolvedCanisterNames.length} canisters`,
+      ),
+    );
   }
 }

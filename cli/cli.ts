@@ -48,6 +48,7 @@ import {
 import { format } from "./commands/format.js";
 import { docs } from "./commands/docs.js";
 import { docsCoverage } from "./commands/docs-coverage.js";
+import { resolve } from "node:path";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -58,10 +59,10 @@ declare global {
 
 events.setMaxListeners(20);
 
-// Current working directory for `npm run mops ...`
-let cwd = process.env["INIT_CWD"];
+// Change working directory for `npm run mops`
+let cwd = process.env["MOPS_CWD"];
 if (cwd) {
-  process.chdir(cwd);
+  process.chdir(resolve(cwd));
 }
 
 let networkFile = getNetworkFile();

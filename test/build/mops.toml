@@ -1,5 +1,5 @@
 [dependencies]
-base = "0.16.2"
+core = "1.0.0"
 
 # [build]
 # foo = "src/Foo.mo"
