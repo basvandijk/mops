@@ -9,18 +9,8 @@ import { sourcesArgs } from "./sources";
 
 type BuildOptions = {
   outputDir: string;
-  // replica : ReplicaName,
-  // replicaVersion : string,
-  // compiler : 'moc',
   verbose: boolean;
-  // compilerVersion : string;
-  // gc : 'copying' | 'compacting' | 'generational' | 'incremental';
-  // forceGc : boolean;
-  // save : boolean,
-  // compare : boolean,
-  // silent : boolean,
-  // profile : 'Debug' | 'Release';
-  extraArgs?: string[];
+  extraArgs: string[];
 };
 
 function isMotokoCanister(canisterConfig: any): boolean {
