@@ -48,8 +48,8 @@ export async function build(
     await mkdir(outputDir, { recursive: true });
   }
   for (let canisterName of resolvedCanisterNames) {
-    options.verbose && console.time(`build ${canisterName}`);
-    console.log(chalk.blue("Building canister"), chalk.bold(canisterName));
+    options.verbose && console.time(`build canister ${canisterName}`);
+    console.log(chalk.blue("build canister"), chalk.bold(canisterName));
     let canisterConfig = dfxConfig.canisters[canisterName];
     if (!canisterConfig) {
       throw new Error(`Cannot find canister ${canisterName} in dfx.json`);
@@ -124,7 +124,7 @@ export async function build(
 
       throw new Error(`Build execution failed for canister ${canisterName}`);
     }
-    options.verbose && console.timeEnd(`build ${canisterName}`);
+    options.verbose && console.timeEnd(`build canister ${canisterName}`);
   }
 
   if (resolvedCanisterNames.length > 1) {
