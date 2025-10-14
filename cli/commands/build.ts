@@ -7,11 +7,11 @@ import { getMocPath } from "../helpers/get-moc-path";
 import { readDfxJson } from "../mops";
 import { sourcesArgs } from "./sources";
 
-type BuildOptions = {
+export interface BuildOptions {
   outputDir: string;
   verbose: boolean;
   extraArgs: string[];
-};
+}
 
 function isMotokoCanister(canisterConfig: any): boolean {
   return !canisterConfig.type || canisterConfig.type === "motoko";
