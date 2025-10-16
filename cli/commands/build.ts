@@ -4,12 +4,14 @@ import { exists } from "fs-extra";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getMocPath } from "../helpers/get-moc-path";
-import { readDfxJson } from "../mops";
+import { readConfig, readDfxJson } from "../mops";
 import { sourcesArgs } from "./sources";
+import { CanisterConfig } from "../types";
 
 export interface BuildOptions {
   outputDir: string;
   verbose: boolean;
+  dfx: boolean;
   extraArgs: string[];
 }
 
@@ -26,48 +28,94 @@ export async function build(
   if (canisterNames?.length == 0) {
     throw new Error("No canisters specified to build");
   }
+
   let outputDir = options.outputDir ?? DEFAULT_BUILD_OUTPUT_DIR;
   let mocPath = getMocPath();
-  let dfxConfig = readDfxJson();
-  let resolvedCanisterNames: string[] =
-    canisterNames ??
-    Object.keys(dfxConfig.canisters).filter((c) =>
-      isMotokoCanister(dfxConfig.canisters[c]),
+  let canisters: Record<string, CanisterConfig> = {};
+  let config = readConfig();
+  if (options.dfx) {
+    let dfxConfig = await readDfxJson();
+    if (dfxConfig.canisters) {
+      canisters = Object.fromEntries(
+        Object.entries(dfxConfig.canisters)
+          .filter(([, c]) => isMotokoCanister(c))
+          .map(([name, c]) => {
+            return [name, c as CanisterConfig];
+          }),
+      );
+      canisterNames = Object.keys(canisters);
+    }
+  } else {
+    if (config.canisters) {
+      canisters =
+        Object.fromEntries(
+          Object.entries(config.canisters).map(([name, c]) =>
+            typeof c === "string" ? [name, { main: c }] : [name, c],
+          ),
+        ) ?? {};
+    }
+  }
+  const configFileDisplayName = options.dfx ? "dfx.json" : "mops.toml";
+  if (!Object.keys(canisters).length) {
+    throw new Error(
+      `No Motoko canisters found in ${configFileDisplayName} configuration`,
     );
+  }
+
+  if (canisterNames) {
+    canisterNames = canisterNames.filter((name) => name in canisters);
+    if (canisterNames.length === 0) {
+      throw new Error("No valid canister names specified");
+    }
+    for (let name of canisterNames) {
+      if (!(name in canisters)) {
+        throw new Error(
+          `Motoko canister '${name}' not found in ${configFileDisplayName} configuration`,
+        );
+      }
+    }
+  }
+
   if (!(await exists(outputDir))) {
     await mkdir(outputDir, { recursive: true });
   }
-  for (let canisterName of resolvedCanisterNames) {
+  for (let [canisterName, canister] of Object.entries(canisters)) {
     options.verbose && console.time(`build canister ${canisterName}`);
     console.log(chalk.blue("build canister"), chalk.bold(canisterName));
-    let canisterConfig = dfxConfig.canisters[canisterName];
-    if (!canisterConfig) {
-      throw new Error(`Cannot find canister ${canisterName} in dfx.json`);
-    }
-    if (canisterConfig.type && canisterConfig.type !== "motoko") {
-      throw new Error(`Canister ${canisterName} is not a Motoko canister`);
-    }
-    let motokoPath = canisterConfig.main;
+    let motokoPath = canister.main;
     if (!motokoPath) {
       throw new Error(`No main file is specified for canister ${canisterName}`);
     }
+    let args = [
+      "-c",
+      "--idl",
+      "-o",
+      join(outputDir, `${canisterName}.wasm`),
+      motokoPath,
+      ...(options.extraArgs ?? []),
+      ...(await sourcesArgs()).flat(),
+    ];
+    if (config.build?.args) {
+      if (typeof config.build.args === "string") {
+        throw new Error(
+          `[build] config 'args' should be an array of strings in ${configFileDisplayName} config file`,
+        );
+      }
+      args.push(...config.build.args);
+    }
+    if (canister.args) {
+      if (typeof canister.args === "string") {
+        throw new Error(
+          `Canister config 'args' should be an array of strings for canister ${canisterName}`,
+        );
+      }
+      args.push(...canister.args);
+    }
     try {
-      const result = await execa(
-        mocPath,
-        [
-          "-c",
-          "--idl",
-          "-o",
-          join(outputDir, `${canisterName}.wasm`),
-          motokoPath,
-          ...(options.extraArgs || []),
-          ...(await sourcesArgs()).flat(),
-        ],
-        {
-          stdio: options.verbose ? "inherit" : "pipe",
-          reject: false,
-        },
-      );
+      const result = await execa(mocPath, args, {
+        stdio: options.verbose ? "inherit" : "pipe",
+        reject: false,
+      });
 
       if (result.exitCode !== 0) {
         console.error(
@@ -95,20 +143,10 @@ export async function build(
       if (error.message?.includes("Build failed for canister")) {
         throw error;
       }
-
       console.error(
-        chalk.red(
-          `Error: Failed to execute moc compiler for canister ${canisterName}`,
-        ),
+        chalk.red(`Error while compiling canister ${canisterName}`),
       );
-
-      if (error.code === "ENOENT") {
-        console.error(
-          chalk.red(
-            "moc compiler not found. Please ensure it's installed and in your PATH.",
-          ),
-        );
-      } else if (error.message) {
+      if (error.message) {
         console.error(chalk.red(`Details: ${error.message}`));
       }
 
@@ -117,11 +155,7 @@ export async function build(
     options.verbose && console.timeEnd(`build canister ${canisterName}`);
   }
 
-  if (resolvedCanisterNames.length > 1) {
-    console.log(
-      chalk.green(
-        `\n✓ Successfully built ${resolvedCanisterNames.length} canisters`,
-      ),
-    );
-  }
+  console.log(
+    chalk.green(`\n✓ Built ${Object.keys(canisters).length} canisters`),
+  );
 }

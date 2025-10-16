@@ -265,6 +265,7 @@ program
   .command("build [canisters...]")
   .description("Build a canister")
   .addOption(new Option("--verbose", "Verbose console output"))
+  .addOption(new Option("--dfx", "Use 'dfx.json' configuration"))
   .addOption(
     new Option("--output", "Output directory").default(
       DEFAULT_BUILD_OUTPUT_DIR,

@@ -1,7 +1,6 @@
 {
   "canisters": {
     "foo": {
-      "dependencies": ["bar"],
       "type": "motoko",
       "main": "src/Foo.mo"
     },
