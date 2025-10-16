@@ -4,19 +4,14 @@ import { exists } from "fs-extra";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getMocPath } from "../helpers/get-moc-path";
-import { readConfig, readDfxJson } from "../mops";
-import { sourcesArgs } from "./sources";
+import { readConfig } from "../mops";
 import { CanisterConfig } from "../types";
+import { sourcesArgs } from "./sources";
 
 export interface BuildOptions {
   outputDir: string;
   verbose: boolean;
-  dfx: boolean;
   extraArgs: string[];
-}
-
-function isMotokoCanister(canisterConfig: any): boolean {
-  return !canisterConfig.type || canisterConfig.type === "motoko";
 }
 
 export const DEFAULT_BUILD_OUTPUT_DIR = ".mops/.build";
@@ -33,33 +28,16 @@ export async function build(
   let mocPath = getMocPath();
   let canisters: Record<string, CanisterConfig> = {};
   let config = readConfig();
-  if (options.dfx) {
-    let dfxConfig = await readDfxJson();
-    if (dfxConfig.canisters) {
-      canisters = Object.fromEntries(
-        Object.entries(dfxConfig.canisters)
-          .filter(([, c]) => isMotokoCanister(c))
-          .map(([name, c]) => {
-            return [name, c as CanisterConfig];
-          }),
-      );
-      canisterNames = Object.keys(canisters);
-    }
-  } else {
-    if (config.canisters) {
-      canisters =
-        Object.fromEntries(
-          Object.entries(config.canisters).map(([name, c]) =>
-            typeof c === "string" ? [name, { main: c }] : [name, c],
-          ),
-        ) ?? {};
-    }
+  if (config.canisters) {
+    canisters =
+      Object.fromEntries(
+        Object.entries(config.canisters).map(([name, c]) =>
+          typeof c === "string" ? [name, { main: c }] : [name, c],
+        ),
+      ) ?? {};
   }
-  const configFileDisplayName = options.dfx ? "dfx.json" : "mops.toml";
   if (!Object.keys(canisters).length) {
-    throw new Error(
-      `No Motoko canisters found in ${configFileDisplayName} configuration`,
-    );
+    throw new Error(`No Motoko canisters found in mops.toml configuration`);
   }
 
   if (canisterNames) {
@@ -70,7 +48,7 @@ export async function build(
     for (let name of canisterNames) {
       if (!(name in canisters)) {
         throw new Error(
-          `Motoko canister '${name}' not found in ${configFileDisplayName} configuration`,
+          `Motoko canister '${name}' not found in mops.toml configuration`,
         );
       }
     }
@@ -98,7 +76,7 @@ export async function build(
     if (config.build?.args) {
       if (typeof config.build.args === "string") {
         throw new Error(
-          `[build] config 'args' should be an array of strings in ${configFileDisplayName} config file`,
+          `[build] config 'args' should be an array of strings in mops.toml config file`,
         );
       }
       args.push(...config.build.args);
